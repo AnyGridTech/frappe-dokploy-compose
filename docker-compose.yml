@@ -204,7 +204,7 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/frappe/code/frappe
+      device: /home/frappe/frappe-bench/apps/frappe
       o: bind,mode=0777
 
   frappe-sites:
