@@ -1,24 +1,26 @@
 version: "3"
 
-x-frappe-image-network-defaults: &frappe-image-network
-  image: frappe/erpnext:v15.71.1
+# --- YAML Anchors / Extensions ---
+x-frappe-image-network-defaults: &frappe-image-network-defaults
+  image: ${FRAPPE_IMAGE}
   networks:
     - frappe_network
 
 x-frappe-service-defaults: &frappe-defaults
-  <<: *frappe-image-network
+  <<: *frappe-image-network-defaults
   deploy:
     restart_policy:
       condition: on-failure
 
 x-redis-defaults: &redis-defaults
-  image: redis:6.2-alpine
+  image: ${REDIS_IMAGE}
   networks:
     - frappe_network
   deploy:
     restart_policy:
       condition: on-failure
 
+# --- Services (começam abaixo disso) ---
 services:
   backend:
     <<: *frappe-defaults
