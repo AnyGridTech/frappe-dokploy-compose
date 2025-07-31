@@ -2,7 +2,7 @@ version: "3"
 
 # --- YAML Anchors / Extensions ---
 x-frappe-image-network-defaults: &frappe-image-network-defaults
-  image: ${FRAPPE_IMAGE}
+  image: frappe/erpnext:v15.71.1
   networks:
     - frappe_network
 
@@ -13,7 +13,7 @@ x-frappe-service-defaults: &frappe-defaults
       condition: on-failure
 
 x-redis-defaults: &redis-defaults
-  image: ${REDIS_IMAGE}
+  image: redis:6.2-alpine
   networks:
     - frappe_network
   deploy:
