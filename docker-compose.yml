@@ -20,7 +20,7 @@ x-redis-defaults: &redis-defaults
     restart_policy:
       condition: on-failure
 
-# --- Services (começam abaixo disso) ---
+# --- Services --- #
 services:
   backend:
     <<: *frappe-defaults
