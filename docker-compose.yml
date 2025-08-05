@@ -118,7 +118,6 @@ services:
     image: mariadb:10.6
     networks:
       - frappe_network
-      - dokploy-network
     deploy:
       restart_policy:
         condition: on-failure
@@ -143,6 +142,7 @@ services:
     image: phpmyadmin/phpmyadmin
     networks:
       - frappe_network
+      - dokploy-network
     ports:
       - "8081:80"
     environment:
