@@ -118,6 +118,7 @@ services:
     image: mariadb:10.6
     networks:
       - frappe_network
+      - dokploy-network
     deploy:
       restart_policy:
         condition: on-failure
