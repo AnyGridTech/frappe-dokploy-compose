@@ -35,6 +35,9 @@ services:
 
   frontend:
     <<: *frappe-defaults
+    networks:
+      - frappe_network
+      - dokploy-network
     depends_on:
       - websocket
     command: [nginx-entrypoint.sh]
@@ -238,3 +241,5 @@ volumes:
 networks:
   frappe_network:
     driver: bridge
+  dokploy-network:
+    external: true
