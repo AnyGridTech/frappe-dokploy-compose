@@ -199,42 +199,42 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/services-logs-data-test
+      device: /home/frappe-test/frappe-bench/logs
       o: bind
 
   frappe-code-data-test:
     driver: local
     driver_opts:
       type: none
-      device: /home/frappe-code-data-test
+      device: /home/frappe-test/frappe-bench/apps/frappe
       o: bind,mode=0777
 
   frappe-sites-data-test:
     driver: local
     driver_opts:
       type: none
-      device: /home/frappe-sites-data-test
+      device: /home/frappe-test/frappe-bench/sites
       o: bind
 
   frappe-db-data-test:
     driver: local
     driver_opts:
       type: none
-      device: /home/frappe-db-data-test
+      device: /home/frappe-test/maria-db/data
       o: bind
 
   frappe-redis-queue-data-test:
     driver: local
     driver_opts:
       type: none
-      device: /home/frappe-redis-queue-data-test
+      device: /home/frappe-test/redis-queue/data
       o: bind
 
   frappe-redis-cache-data-test:
     driver: local
     driver_opts:
       type: none
-      device: /home/frappe-redis-cache-data-test
+      device: /home/frappe-test/redis-cache/data
       o: bind
 
 networks:
@@ -242,3 +242,14 @@ networks:
     driver: bridge
   dokploy-network:
     external: true
+
+# --- End of Services --- #
+
+# Em caso de erro relacionado a pastas dos volumes não existirem, crie as pastas com o comando abaixo:
+# sudo mkdir -p \
+#   /home/frappe-test/frappe-bench/logs \
+#   /home/frappe-test/frappe-bench/apps/frappe \
+#   /home/frappe-test/frappe-bench/sites \
+#   /home/frappe-test/maria-db/data \
+#   /home/frappe-test/redis-cache/data \
+#   /home/frappe-test/redis-queue/data  
