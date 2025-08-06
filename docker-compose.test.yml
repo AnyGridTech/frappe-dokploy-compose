@@ -1,0 +1,244 @@
+version: "3"
+
+# --- YAML Anchors / Extensions ---
+x-frappe-image-network-defaults: &frappe-image-network-defaults
+  image: frappe/erpnext:v15.71.1
+  networks:
+    - frappe-network-test
+
+x-frappe-service-defaults: &frappe-defaults
+  <<: *frappe-image-network-defaults
+  deploy:
+    restart_policy:
+      condition: on-failure
+
+x-redis-defaults: &redis-defaults
+  image: redis:6.2-alpine
+  networks:
+    - frappe-network-test
+  deploy:
+    restart_policy:
+      condition: on-failure
+
+# --- Services --- #
+services:
+  backend-service-test:
+    <<: *frappe-defaults
+    volumes:
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+    environment:
+      DB_HOST: db-service-test
+      DB_PORT: "3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+  frontend-service-test:
+    <<: *frappe-defaults
+    networks:
+      - frappe-network-test
+      - dokploy-network
+    depends_on:
+      - websocket-service-test
+    command: [nginx-entrypoint.sh]
+    environment:
+      SITE_NAME: ${SITE_NAME}
+      BACKEND: backend-service-test:8000
+      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
+      SOCKETIO: websocket-service-test:9000
+      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      PROXY_READ_TIMEOUT: 120
+      CLIENT_MAX_BODY_SIZE: 50m
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  configurator-service-test:
+    <<: *frappe-image-network-defaults
+    deploy:
+      restart_policy:
+        condition: none
+    entrypoint: [bash, -c]
+    command:
+      - >
+        ls -1 apps > sites/apps.txt;
+        bench set-config -g db_host $$DB_HOST;
+        bench set-config -gp db_port $$DB_PORT;
+        bench set-config -g redis_cache "redis://$$REDIS_CACHE";
+        bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
+        bench set-config -g redis_socketio "redis://$$REDIS_QUEUE";
+        bench set-config -gp socketio_port $$SOCKETIO_PORT;
+    environment:
+      DB_HOST: db-service-test
+      DB_PORT: "3306"
+      REDIS_CACHE: redis-cache-service-test:6379
+      REDIS_QUEUE: redis-queue-service-test:6379
+      SOCKETIO_PORT: "9000"
+    volumes:
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  create-site-service-test:
+    <<: *frappe-image-network-defaults
+    deploy:
+      restart_policy:
+        condition: none
+    entrypoint: [bash, -c]
+    command:
+      - >
+        wait-for-it -t 120 db-service-test:3306;
+        wait-for-it -t 120 redis-cache-service-test:6379;
+        wait-for-it -t 120 redis-queue-service-test:6379;
+        export start=`date +%s`;
+        until [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty"` ]] &&
+          [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_cache // empty"` ]] &&
+          [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_queue // empty"` ]];
+        do
+          echo "Waiting for sites/common_site_config.json to be created";
+          sleep 5;
+          if (( `date +%s` - start > 120 )); then
+            echo "could not find sites/common_site_config.json with required keys";
+            exit 1;
+          fi;
+        done;
+        echo "sites/common_site_config.json found";
+        bench new-site --mariadb-user-host-login-scope='%' --admin-password=$${MYSQL_ROOT_PASSWORD} --db-root-username=root --db-root-password=$${MYSQL_ROOT_PASSWORD} --install-app erpnext --set-default $${SITE_NAME}
+    volumes:
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+    environment:
+      SITE_NAME: ${SITE_NAME}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+  db-service-test:
+    image: mariadb:10.6
+    networks:
+      - frappe-network-test
+    deploy:
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: mysqladmin ping -h localhost --password=${MYSQL_ROOT_PASSWORD}
+      interval: 300s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+      - --max_allowed_packet=64M
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - frappe-db-data-test:/var/lib/mysql
+
+  phpmyadmin-service-test:
+    image: phpmyadmin/phpmyadmin
+    networks:
+      - frappe-network-test
+      - dokploy-network
+    environment:
+      PMA_HOST: db-service-test
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      UPLOAD_LIMIT: 500M
+      MAX_EXECUTION_TIME: 600
+      MEMORY_LIMIT: 512M
+    depends_on:
+      db-service-test:
+        condition: service_healthy
+    links:
+      - db-service-test 
+
+  queue-long-service-test:
+    <<: *frappe-defaults
+    command: [bench, worker, --queue, "long,default,short"]
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  queue-short-service-test:
+    <<: *frappe-defaults
+    command: [bench, worker, --queue, "short,default"]
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  scheduler-service-test:
+    <<: *frappe-defaults
+    command: [bench, schedule]
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  websocket-service-test:
+    <<: *frappe-defaults
+    command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  redis-queue-service-test:
+    <<: *redis-defaults
+    volumes:
+      - frappe-redis-queue-data-test:/data
+
+  redis-cache-service-test:
+    <<: *redis-defaults
+    volumes:
+      - frappe-redis-cache-data-test:/data
+
+volumes:
+  services-logs-data-test:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/services-logs-data-test
+      o: bind
+
+  frappe-code-data-test:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-code-data-test
+      o: bind,mode=0777
+
+  frappe-sites-data-test:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-sites-data-test
+      o: bind
+
+  frappe-db-data-test:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-db-data-test
+      o: bind
+
+  frappe-redis-queue-data-test:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-redis-queue-data-test
+      o: bind
+
+  frappe-redis-cache-data-test:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-redis-cache-data-test
+      o: bind
+
+networks:
+  frappe-network-test:
+    driver: bridge
+  dokploy-network:
+    external: true
