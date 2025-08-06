@@ -158,14 +158,14 @@ services:
 
   queue-long:
     <<: *frappe-defaults
-    command: [bench, worker, --queue, long,default,short]
+    command: [bench, worker, --queue, long, default, short]
     volumes:
       - frappe-sites:/home/frappe/frappe-bench/sites
       - services-logs:/home/frappe/frappe-bench/logs
 
   queue-short:
     <<: *frappe-defaults
-    command: [bench, worker, --queue, short,default]
+    command: [bench, worker, --queue, short, default]
     volumes:
       - frappe-sites:/home/frappe/frappe-bench/sites
       - services-logs:/home/frappe/frappe-bench/logs
