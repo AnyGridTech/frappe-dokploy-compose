@@ -27,26 +27,14 @@ services:
   queue-long-service-test:
     <<: *frappe-defaults
     command: [bench, worker, --queue, "long,default,short"]
-    environment:
-      REDIS_CACHE: redis://redis-cache-service-test:6379
-      REDIS_QUEUE: redis://redis-queue-service-test:6379
-      REDIS_SOCKETIO: redis://redis-queue-service-test:6379
 
   queue-short-service-test:
     <<: *frappe-defaults
     command: [bench, worker, --queue, "short,default"]
-    environment:
-      REDIS_CACHE: redis://redis-cache-service-test:6379
-      REDIS_QUEUE: redis://redis-queue-service-test:6379
-      REDIS_SOCKETIO: redis://redis-queue-service-test:6379
 
   websocket-service-test:
     <<: *frappe-defaults
     command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
-    environment:
-      REDIS_CACHE: redis://redis-cache-service-test:6379
-      REDIS_QUEUE: redis://redis-queue-service-test:6379
-      REDIS_SOCKETIO: redis://redis-queue-service-test:6379
 
   redis-queue-service-test:
     <<: *redis-defaults

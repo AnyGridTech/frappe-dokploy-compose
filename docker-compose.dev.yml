@@ -23,30 +23,18 @@ services:
   scheduler-service-dev:
     <<: *frappe-defaults
     command: [bench, schedule]
-    
+
   queue-long-service-dev:
     <<: *frappe-defaults
     command: [bench, worker, --queue, "long,default,short"]
-    environment:
-      REDIS_CACHE: redis://redis-cache-service-dev:6379
-      REDIS_QUEUE: redis://redis-queue-service-dev:6379
-      REDIS_SOCKETIO: redis://redis-queue-service-dev:6379
 
   queue-short-service-dev:
     <<: *frappe-defaults
     command: [bench, worker, --queue, "short,default"]
-    environment:
-      REDIS_CACHE: redis://redis-cache-service-dev:6379
-      REDIS_QUEUE: redis://redis-queue-service-dev:6379
-      REDIS_SOCKETIO: redis://redis-queue-service-dev:6379
 
   websocket-service-dev:
     <<: *frappe-defaults
     command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
-    environment:
-      REDIS_CACHE: redis://redis-cache-service-dev:6379
-      REDIS_QUEUE: redis://redis-queue-service-dev:6379
-      REDIS_SOCKETIO: redis://redis-queue-service-dev:6379
 
   redis-queue-service-dev:
     <<: *redis-defaults
