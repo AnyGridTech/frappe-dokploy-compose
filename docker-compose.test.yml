@@ -60,9 +60,9 @@ services:
       - websocket-service-test
     command: [nginx-entrypoint.sh]
     environment:
-      SITE_NAME: ${SITE_NAME}
+      SITE_NAME: erp-test.growatt.app
       BACKEND: backend-service-test:8000
-      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
+      FRAPPE_SITE_NAME_HEADER: erp-test.growatt.app
       SOCKETIO: websocket-service-test:9000
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
@@ -118,11 +118,11 @@ services:
           fi;
         done;
         echo "sites/common_site_config.json found";
-        bench new-site --mariadb-user-host-login-scope='%' --admin-password=$${MYSQL_ROOT_PASSWORD} --db-root-username=root --db-root-password=$${MYSQL_ROOT_PASSWORD} --install-app erpnext --set-default $${SITE_NAME}
+        bench new-site --mariadb-user-host-login-scope='%' --admin-password=$${MYSQL_ROOT_PASSWORD} --db-root-username=root --db-root-password=$${MYSQL_ROOT_PASSWORD} --install-app erpnext --set-default erp-test.growatt.app
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
     environment:
-      SITE_NAME: ${SITE_NAME}
+      SITE_NAME: erp-test.growatt.app
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
   db-service-test:
