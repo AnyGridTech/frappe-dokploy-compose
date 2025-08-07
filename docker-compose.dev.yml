@@ -20,21 +20,33 @@ x-redis-defaults: &redis-defaults
       condition: on-failure
 
 services:
+  scheduler-service-dev:
+    <<: *frappe-defaults
+    command: [bench, schedule]
+    
   queue-long-service-dev:
     <<: *frappe-defaults
     command: [bench, worker, --queue, "long,default,short"]
+    environment:
+      REDIS_CACHE: redis://redis-cache-service-dev:6379
+      REDIS_QUEUE: redis://redis-queue-service-dev:6379
+      REDIS_SOCKETIO: redis://redis-queue-service-dev:6379
 
   queue-short-service-dev:
     <<: *frappe-defaults
     command: [bench, worker, --queue, "short,default"]
-
-  scheduler-service-dev:
-    <<: *frappe-defaults
-    command: [bench, schedule]
+    environment:
+      REDIS_CACHE: redis://redis-cache-service-dev:6379
+      REDIS_QUEUE: redis://redis-queue-service-dev:6379
+      REDIS_SOCKETIO: redis://redis-queue-service-dev:6379
 
   websocket-service-dev:
     <<: *frappe-defaults
     command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
+    environment:
+      REDIS_CACHE: redis://redis-cache-service-dev:6379
+      REDIS_QUEUE: redis://redis-queue-service-dev:6379
+      REDIS_SOCKETIO: redis://redis-queue-service-dev:6379
 
   redis-queue-service-dev:
     <<: *redis-defaults
@@ -61,8 +73,8 @@ services:
     command: [nginx-entrypoint.sh]
     environment:
       SITE_NAME: erp-dev.growatt.app
-      BACKEND: backend-service-dev:8000
       FRAPPE_SITE_NAME_HEADER: erp-dev.growatt.app
+      BACKEND: backend-service-dev:8000
       SOCKETIO: websocket-service-dev:9000
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
