@@ -20,32 +20,42 @@ x-redis-defaults: &redis-defaults
       condition: on-failure
 
 services:
-  scheduler-service-dev:
-    <<: *frappe-defaults
-    command: [bench, schedule]
-
-  queue-long-service-dev:
-    <<: *frappe-defaults
-    command: [bench, worker, --queue, "long,default,short"]
-
-  queue-short-service-dev:
-    <<: *frappe-defaults
-    command: [bench, worker, --queue, "short,default"]
-
-  websocket-service-dev:
-    <<: *frappe-defaults
-    command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
 
   redis-queue-service-dev:
     <<: *redis-defaults
 
   redis-cache-service-dev:
     <<: *redis-defaults
+
+  scheduler-service-dev:
+    <<: *frappe-defaults
+    command: [bench, schedule]
+    volumes:
+      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
+
+  queue-long-service-dev:
+    <<: *frappe-defaults
+    command: [bench, worker, --queue, "long,default,short"]
+    volumes:
+      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
+
+  queue-short-service-dev:
+    <<: *frappe-defaults
+    command: [bench, worker, --queue, "short,default"]
+    volumes:
+      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
+
+  websocket-service-dev:
+    <<: *frappe-defaults
+    command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
+    volumes:
+      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
     
   backend-service-dev:
     <<: *frappe-defaults
     volumes:
       - frappe-code-data-dev:/home/frappe/frappe-bench/apps/frappe
+      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
     environment:
       DB_HOST: db-service-dev
       DB_PORT: "3306"
@@ -93,6 +103,7 @@ services:
       SOCKETIO_PORT: "9000"
     volumes:
       - frappe-code-data-dev:/home/frappe/frappe-bench/apps/frappe
+      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
 
   create-site-service-dev:
     <<: *frappe-image-network-defaults
@@ -121,6 +132,7 @@ services:
         bench new-site --mariadb-user-host-login-scope='%' --admin-password=$${MYSQL_ROOT_PASSWORD} --db-root-username=root --db-root-password=$${MYSQL_ROOT_PASSWORD} --install-app erpnext --set-default erp-dev.growatt.app
     volumes:
       - frappe-code-data-dev:/home/frappe/frappe-bench/apps/frappe
+      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
     environment:
       SITE_NAME: erp-dev.growatt.app
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -173,6 +185,13 @@ volumes:
       device: /home/frappe-dev/frappe-bench/apps/frappe
       o: bind,mode=0777
 
+  frappe-sites-data-dev:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-dev/frappe-bench/sites
+      o: bind,mode=0777
+
 networks:
   frappe-network-dev:
     driver: bridge
@@ -180,4 +199,6 @@ networks:
     external: true
 
 # Em caso de erro relacionado a pastas dos volumes não existirem, crie as pastas com o comando abaixo:
-# sudo mkdir -p /home/frappe-dev/frappe-bench/apps/frappe 
+# sudo mkdir -p \
+# /home/frappe-dev/frappe-bench/apps/frappe \
+# /home/frappe-dev/frappe-bench/sites 
