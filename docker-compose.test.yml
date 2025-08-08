@@ -1,5 +1,6 @@
 version: "3"
 
+# --- YAML Anchors / Extensions ---
 x-frappe-image-network-defaults: &frappe-image-network-defaults
   image: frappe/erpnext:v15.71.1
   networks:
@@ -19,43 +20,14 @@ x-redis-defaults: &redis-defaults
     restart_policy:
       condition: on-failure
 
+# --- Services --- #
 services:
-
-  redis-queue-service-test:
-    <<: *redis-defaults
-
-  redis-cache-service-test:
-    <<: *redis-defaults
-
-  scheduler-service-test:
-    <<: *frappe-defaults
-    command: [bench, schedule]
-    volumes:
-      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-
-  queue-long-service-test:
-    <<: *frappe-defaults
-    command: [bench, worker, --queue, "long,default,short"]
-    volumes:
-      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-
-  queue-short-service-test:
-    <<: *frappe-defaults
-    command: [bench, worker, --queue, "short,default"]
-    volumes:
-      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-
-  websocket-service-test:
-    <<: *frappe-defaults
-    command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
-    volumes:
-      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-    
   backend-service-test:
     <<: *frappe-defaults
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
     environment:
       DB_HOST: db-service-test
       DB_PORT: "3306"
@@ -71,14 +43,17 @@ services:
     command: [nginx-entrypoint.sh]
     environment:
       SITE_NAME: erp-test.growatt.app
-      FRAPPE_SITE_NAME_HEADER: erp-test.growatt.app
       BACKEND: backend-service-test:8000
+      FRAPPE_SITE_NAME_HEADER: erp-test.growatt.app
       SOCKETIO: websocket-service-test:9000
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
       UPSTREAM_REAL_IP_RECURSIVE: "off"
       PROXY_READ_TIMEOUT: 120
       CLIENT_MAX_BODY_SIZE: 50m
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
 
   configurator-service-test:
     <<: *frappe-image-network-defaults
@@ -104,6 +79,7 @@ services:
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
 
   create-site-service-test:
     <<: *frappe-image-network-defaults
@@ -133,6 +109,7 @@ services:
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
     environment:
       SITE_NAME: erp-test.growatt.app
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -149,7 +126,7 @@ services:
       interval: 300s
       timeout: 5s
       retries: 10
-      start_period: 5s
+      start_period: 15s
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
@@ -158,6 +135,8 @@ services:
       - --max_allowed_packet=64M
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - frappe-db-data-test:/var/lib/mysql
 
   phpmyadmin-service-test:
     image: phpmyadmin/phpmyadmin
@@ -175,9 +154,54 @@ services:
       db-service-test:
         condition: service_healthy
     links:
-      - db-service-test
+      - db-service-test 
+
+  queue-long-service-test:
+    <<: *frappe-defaults
+    command: [bench, worker, --queue, "long,default,short"]
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  queue-short-service-test:
+    <<: *frappe-defaults
+    command: [bench, worker, --queue, "short,default"]
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  scheduler-service-test:
+    <<: *frappe-defaults
+    command: [bench, schedule]
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  websocket-service-test:
+    <<: *frappe-defaults
+    command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  redis-queue-service-test:
+    <<: *redis-defaults
+    volumes:
+      - frappe-redis-queue-data-test:/data
+
+  redis-cache-service-test:
+    <<: *redis-defaults
+    volumes:
+      - frappe-redis-cache-data-test:/data
 
 volumes:
+  services-logs-data-test:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-test/frappe-bench/logs
+      o: bind
+
   frappe-code-data-test:
     driver: local
     driver_opts:
@@ -190,7 +214,28 @@ volumes:
     driver_opts:
       type: none
       device: /home/frappe-test/frappe-bench/sites
-      o: bind,mode=0777
+      o: bind
+
+  frappe-db-data-test:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-test/maria-db/data
+      o: bind
+
+  frappe-redis-queue-data-test:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-test/redis-queue/data
+      o: bind
+
+  frappe-redis-cache-data-test:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-test/redis-cache/data
+      o: bind
 
 networks:
   frappe-network-test:
@@ -198,7 +243,13 @@ networks:
   dokploy-network:
     external: true
 
+# --- End of Services --- #
+
 # Em caso de erro relacionado a pastas dos volumes não existirem, crie as pastas com o comando abaixo:
 # sudo mkdir -p \
-# /home/frappe-test/frappe-bench/apps/frappe \
-# /home/frappe-test/frappe-bench/sites 
+#   /home/frappe-test/frappe-bench/logs \
+#   /home/frappe-test/frappe-bench/apps/frappe \
+#   /home/frappe-test/frappe-bench/sites \
+#   /home/frappe-test/maria-db/data \
+#   /home/frappe-test/redis-cache/data \
+#   /home/frappe-test/redis-queue/data  

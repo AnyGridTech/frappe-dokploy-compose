@@ -1,5 +1,6 @@
 version: "3"
 
+# --- YAML Anchors / Extensions ---
 x-frappe-image-network-defaults: &frappe-image-network-defaults
   image: frappe/erpnext:v15.71.1
   networks:
@@ -19,43 +20,14 @@ x-redis-defaults: &redis-defaults
     restart_policy:
       condition: on-failure
 
+# --- Services --- #
 services:
-
-  redis-queue-service-dev:
-    <<: *redis-defaults
-
-  redis-cache-service-dev:
-    <<: *redis-defaults
-
-  scheduler-service-dev:
-    <<: *frappe-defaults
-    command: [bench, schedule]
-    volumes:
-      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
-
-  queue-long-service-dev:
-    <<: *frappe-defaults
-    command: [bench, worker, --queue, "long,default,short"]
-    volumes:
-      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
-
-  queue-short-service-dev:
-    <<: *frappe-defaults
-    command: [bench, worker, --queue, "short,default"]
-    volumes:
-      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
-
-  websocket-service-dev:
-    <<: *frappe-defaults
-    command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
-    volumes:
-      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
-    
   backend-service-dev:
     <<: *frappe-defaults
     volumes:
       - frappe-code-data-dev:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
+      - services-logs-data-dev:/home/frappe/frappe-bench/logs
     environment:
       DB_HOST: db-service-dev
       DB_PORT: "3306"
@@ -71,14 +43,17 @@ services:
     command: [nginx-entrypoint.sh]
     environment:
       SITE_NAME: erp-dev.growatt.app
-      FRAPPE_SITE_NAME_HEADER: erp-dev.growatt.app
       BACKEND: backend-service-dev:8000
+      FRAPPE_SITE_NAME_HEADER: erp-dev.growatt.app
       SOCKETIO: websocket-service-dev:9000
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
       UPSTREAM_REAL_IP_RECURSIVE: "off"
       PROXY_READ_TIMEOUT: 120
       CLIENT_MAX_BODY_SIZE: 50m
+    volumes:
+      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
+      - services-logs-data-dev:/home/frappe/frappe-bench/logs
 
   configurator-service-dev:
     <<: *frappe-image-network-defaults
@@ -104,6 +79,7 @@ services:
     volumes:
       - frappe-code-data-dev:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
+      - services-logs-data-dev:/home/frappe/frappe-bench/logs
 
   create-site-service-dev:
     <<: *frappe-image-network-defaults
@@ -133,6 +109,7 @@ services:
     volumes:
       - frappe-code-data-dev:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
+      - services-logs-data-dev:/home/frappe/frappe-bench/logs
     environment:
       SITE_NAME: erp-dev.growatt.app
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -149,7 +126,7 @@ services:
       interval: 300s
       timeout: 5s
       retries: 10
-      start_period: 5s
+      start_period: 15s
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
@@ -158,6 +135,8 @@ services:
       - --max_allowed_packet=64M
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - frappe-db-data-dev:/var/lib/mysql
 
   phpmyadmin-service-dev:
     image: phpmyadmin/phpmyadmin
@@ -175,9 +154,54 @@ services:
       db-service-dev:
         condition: service_healthy
     links:
-      - db-service-dev
+      - db-service-dev 
+
+  queue-long-service-dev:
+    <<: *frappe-defaults
+    command: [bench, worker, --queue, "long,default,short"]
+    volumes:
+      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
+      - services-logs-data-dev:/home/frappe/frappe-bench/logs
+
+  queue-short-service-dev:
+    <<: *frappe-defaults
+    command: [bench, worker, --queue, "short,default"]
+    volumes:
+      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
+      - services-logs-data-dev:/home/frappe/frappe-bench/logs
+
+  scheduler-service-dev:
+    <<: *frappe-defaults
+    command: [bench, schedule]
+    volumes:
+      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
+      - services-logs-data-dev:/home/frappe/frappe-bench/logs
+
+  websocket-service-dev:
+    <<: *frappe-defaults
+    command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
+    volumes:
+      - frappe-sites-data-dev:/home/frappe/frappe-bench/sites
+      - services-logs-data-dev:/home/frappe/frappe-bench/logs
+
+  redis-queue-service-dev:
+    <<: *redis-defaults
+    volumes:
+      - frappe-redis-queue-data-dev:/data
+
+  redis-cache-service-dev:
+    <<: *redis-defaults
+    volumes:
+      - frappe-redis-cache-data-dev:/data
 
 volumes:
+  services-logs-data-dev:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-dev/frappe-bench/logs
+      o: bind
+
   frappe-code-data-dev:
     driver: local
     driver_opts:
@@ -190,7 +214,28 @@ volumes:
     driver_opts:
       type: none
       device: /home/frappe-dev/frappe-bench/sites
-      o: bind,mode=0777
+      o: bind
+
+  frappe-db-data-dev:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-dev/maria-db/data
+      o: bind
+
+  frappe-redis-queue-data-dev:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-dev/redis-queue/data
+      o: bind
+
+  frappe-redis-cache-data-dev:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-dev/redis-cache/data
+      o: bind
 
 networks:
   frappe-network-dev:
@@ -198,7 +243,13 @@ networks:
   dokploy-network:
     external: true
 
+# --- End of Services --- #
+
 # Em caso de erro relacionado a pastas dos volumes não existirem, crie as pastas com o comando abaixo:
 # sudo mkdir -p \
-# /home/frappe-dev/frappe-bench/apps/frappe \
-# /home/frappe-dev/frappe-bench/sites 
+#   /home/frappe-dev/frappe-bench/logs \
+#   /home/frappe-dev/frappe-bench/apps/frappe \
+#   /home/frappe-dev/frappe-bench/sites \
+#   /home/frappe-dev/maria-db/data \
+#   /home/frappe-dev/redis-cache/data \
+#   /home/frappe-dev/redis-queue/data  
