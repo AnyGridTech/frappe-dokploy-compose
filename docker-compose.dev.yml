@@ -2,7 +2,7 @@ version: "3"
 
 # --- YAML Anchors / Extensions ---
 x-frappe-image-network-defaults: &frappe-image-network-defaults
-  image: frappe/erpnext:v15.71.1
+  image: frappe/erpnext:v15
   networks:
     - frappe-network-dev
 
