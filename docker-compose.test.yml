@@ -123,10 +123,10 @@ services:
         condition: on-failure
     healthcheck:
       test: mysqladmin ping -h localhost --password=${MYSQL_ROOT_PASSWORD}
-      interval: 300s
+      interval: 60s
       timeout: 5s
-      retries: 10
-      start_period: 15s
+      retries: 5
+      start_period: 60s
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
