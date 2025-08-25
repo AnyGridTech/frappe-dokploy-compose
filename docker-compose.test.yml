@@ -217,6 +217,16 @@ services:
       wait-for-it -t 300 redis-cache-service-test:6379;
       wait-for-it -t 300 redis-queue-service-test:6379;
 
+      until bench --site "$SITE_NAME" list-apps 2>/dev/null | grep -q "frappe"; do
+        echo "Aguardando frappe estar instalado em $SITE_NAME…";
+        sleep 5;
+      done;
+
+      until bench --site "$SITE_NAME" list-apps 2>/dev/null | grep -q "erpnext"; do
+        echo "Aguardando erpnext estar instalado em $SITE_NAME…";
+        sleep 5;
+      done;
+
       # idempotency: skip if we already ran
       if bench --site "$SITE_NAME" get-config | grep -q '"bootstrap_done": 1'; then
         echo "Bootstrap already done"; exit 0; fi;
