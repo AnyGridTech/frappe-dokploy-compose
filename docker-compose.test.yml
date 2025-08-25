@@ -228,27 +228,26 @@ services:
       echo "Running setup_wizard.setup_complete…";
       bench --site "$SITE_NAME" execute \
         frappe.desk.page.setup_wizard.setup_wizard.setup_complete \
-        --kwargs "$(cat <<'EOF' | jq -c .
-          {
-            "currency": "USD",
-            "full_name": "Administrator",
-            "company_name": "Ambrosia Pie Company",
-            "timezone": "America/New_York",
-            "company_abbr": "APC",
-            "domains": ["Distribution"],
-            "country": "United States",
-            "fy_start_date": "__FY_START__",
-            "fy_end_date": "__FY_END__",
-            "language": "english",
-            "company_tagline": "Ambrosia Pie Company",
-            "email": "support@agritheory.dev",
-            "password": "__ADMIN_PASS__",
-            "chart_of_accounts": "Standard with Numbers",
-            "bank_account": "Primary Checking"
-          }
-          EOF
-        )"
-      ;
+        --kwargs "$(cat <<EOF | jq -c .
+        {
+          "currency": "BRL",
+          "full_name": "Administrator",
+          "company_name": "Growatt",
+          "timezone": "America/Sao_Paulo",
+          "company_abbr": "GRT",
+          "domains": ["Distribution"],
+          "country": "Brazil",
+          "fy_start_date": "$FY_START",
+          "fy_end_date": "$FY_END",
+          "language": "english",
+          "company_tagline": "Growatt",
+          "email": "admin@growatt.app",
+          "password": "$ADMIN_PASS",
+          "chart_of_accounts": "Standard with Numbers",
+          "bank_account": "Primary Checking"
+        }
+        EOF
+      )";
 
       echo "Enabling all roles & domains…";
       bench --site "$SITE_NAME" execute erpnext.setup.utils.enable_all_roles_and_domains;
