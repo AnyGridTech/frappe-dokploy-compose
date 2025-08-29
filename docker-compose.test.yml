@@ -121,7 +121,7 @@ services:
         FY_START="$$Y-01-01";
         FY_END="$$Y-12-31";
 
-        JSON_BODY=$$(cat <<EOF
+        read -r -d '' JSON_BODY <<EOF
         {
           "currency": "BRL",
           "country": "Brazil",
@@ -138,7 +138,6 @@ services:
           "setup_demo": 0
         }
         EOF
-        )
 
         set +e;
         resp="$$(curl -sS -L --fail-with-body \
