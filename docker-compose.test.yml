@@ -123,7 +123,7 @@ services:
 
         set +e;
         resp="$$(curl -sS -L --fail-with-body \
-          -u \"Administrator:$${ADMIN_PASSWORD}\" \
+          -u \"Administrator:$${MYSQL_ROOT_PASSWORD}\" \
           -H \"Host: $${SITE_NAME}\" \
           -H \"Content-Type: application/json\" \
           -d '{
@@ -133,7 +133,7 @@ services:
             \"language\":\"English\",
             \"full_name\":\"Luan Gabriel\",
             \"email\":\"lgotcfg@gmail.com\",
-            \"password\":\"'\"$${ADMIN_PASSWORD}\"'\",
+            \"password\":\"'\"$${MYSQL_ROOT_PASSWORD}\"'\",
             \"company_name\":\"Growatt\",
             \"company_abbr\":\"GRT\",
             \"chart_of_accounts\":\"Brazil - Chart of Accounts\",
