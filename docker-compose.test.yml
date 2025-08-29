@@ -105,11 +105,16 @@ services:
           fi;
         done;
         echo "sites/common_site_config.json found";
-        bench new-site --mariadb-user-host-login-scope='%' --admin-password=$${MYSQL_ROOT_PASSWORD} --db-root-username=root --db-root-password=$${MYSQL_ROOT_PASSWORD} --install-app erpnext --set-default erp-test.growatt.app
+        bench new-site --mariadb-user-host-login-scope='%' \
+          --admin-password=$${MYSQL_ROOT_PASSWORD} \
+          --db-root-username=root --db-root-password=$${MYSQL_ROOT_PASSWORD} \
+          --install-app erpnext \
+          --set-default erp-test.growatt.app
 
         # LUAN CODE BELOW 
-        # PLEASE DO NOT TOUCH WITHOUT ASKING FIRST
+        # DO NOT TOUCHY WITHOUT ASKING FIRST
 
+        sleep 5;
         echo "Running automated setup_wizard...";
 
         Y=$(date +%Y)
