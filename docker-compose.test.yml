@@ -113,7 +113,7 @@ services:
 
         # LUAN CODE BELOW 
         # DO NOT TOUCHY WITHOUT ASKING FIRST
-        
+
         sleep 5
         echo "Running automated setup_wizard..."
 
@@ -164,7 +164,6 @@ services:
         else
           echo "🚀 automated setup_wizard finished."
         fi
-
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
