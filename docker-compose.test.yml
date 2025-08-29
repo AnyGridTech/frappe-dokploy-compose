@@ -121,29 +121,33 @@ services:
         FY_START="$$Y-01-01";
         FY_END="$$Y-12-31";
 
+        JSON_BODY=$$(cat <<EOF
+        {
+          "currency": "BRL",
+          "country": "Brazil",
+          "timezone": "America/Sao_Paulo",
+          "language": "English",
+          "full_name": "Luan Gabriel",
+          "email": "lgotcfg@gmail.com",
+          "password": "$${MYSQL_ROOT_PASSWORD}",
+          "company_name": "Growatt",
+          "company_abbr": "GRT",
+          "chart_of_accounts": "Brazil - Chart of Accounts",
+          "fy_start_date": "$$FY_START",
+          "fy_end_date": "$$FY_END",
+          "setup_demo": 0
+        }
+        EOF
+        )
+
         set +e;
         resp="$$(curl -sS -L --fail-with-body \
-          -u \"Administrator:$${MYSQL_ROOT_PASSWORD}\" \
-          -H \"Host: $${SITE_NAME}\" \
-          -H \"Content-Type: application/json\" \
-          -d '{
-            \"currency\":\"BRL\",
-            \"country\":\"Brazil\",
-            \"timezone\":\"America/Sao_Paulo\",
-            \"language\":\"English\",
-            \"full_name\":\"Luan Gabriel\",
-            \"email\":\"lgotcfg@gmail.com\",
-            \"password\":\"'\"$${MYSQL_ROOT_PASSWORD}\"'\",
-            \"company_name\":\"Growatt\",
-            \"company_abbr\":\"GRT\",
-            \"chart_of_accounts\":\"Brazil - Chart of Accounts\",
-            \"fy_start_date\":\"'\"$$FY_START\"'\",
-            \"fy_end_date\":\"'\"$$FY_END\"'\",
-            \"setup_demo\":0
-          }' \
+          -u "Administrator:$${MYSQL_ROOT_PASSWORD}" \
+          -H "Host: $${SITE_NAME}" \
+          -H "Content-Type: application/json" \
+          -d "$$JSON_BODY" \
           http://backend-service-test:8000/api/method/frappe.desk.page.setup_wizard.setup_wizard.setup_complete \
-          -w $'\\n%{http_code}')";
-
+          -w $'\\n%{http_code}')"
         rc=$$?;
         set -e;
 
