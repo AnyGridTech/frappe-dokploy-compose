@@ -113,8 +113,8 @@ services:
 
         # LUAN CODE BELOW 
         # DO NOT TOUCHY WITHOUT ASKING FIRST
-
-        sleep 5;
+        echo "Waiting for backend to be available...";
+        wait-for-it -t 120 backend-service-test:8000;
         echo "Running automated setup_wizard...";
 
         Y=$$(date +%Y);
