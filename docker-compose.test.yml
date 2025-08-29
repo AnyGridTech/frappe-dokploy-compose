@@ -121,12 +121,6 @@ services:
         FY_START="$Y-01-01"
         FY_END="$Y-12-31"
 
-        # Se o admin do ERPNext usa a mesma senha do site, reaproveite. Senão, defina ADMIN_PASSWORD.
-        ADMIN_PASSWORD="${ADMIN_PASSWORD:-${MYSQL_ROOT_PASSWORD}}"
-
-        # (Opcional) cheque se SITE_NAME está definido
-        : "${SITE_NAME:?SITE_NAME não definido}"
-
         set +e
         resp="$(
           curl -sS -L --fail-with-body \
