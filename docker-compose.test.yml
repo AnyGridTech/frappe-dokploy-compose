@@ -106,6 +106,44 @@ services:
         done;
         echo "sites/common_site_config.json found";
         bench new-site --mariadb-user-host-login-scope='%' --admin-password=$${MYSQL_ROOT_PASSWORD} --db-root-username=root --db-root-password=$${MYSQL_ROOT_PASSWORD} --install-app erpnext --set-default erp-test.growatt.app
+
+        # LUAN CODE BELOW 
+        # PLEASE DO NOT TOUCH WITHOUT ASKING FIRST
+
+        echo "Running automated setup_wizard...";
+
+        Y=$(date +%Y)
+        FY_START="$Y-01-01"
+        FY_END="$Y-12-31"
+
+        set +e;
+        curl -fsS -u "Administrator:$${MYSQL_ROOT_PASSWORD}" \
+          -H "Host: $SITE_NAME" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "currency":"BRL",
+            "country":"Brazil",
+            "timezone":"America/Sao_Paulo",
+            "language":"English",
+            "full_name":"Luan Gabriel",
+            "email":"lgotcfg@gmail.com",
+            "password":"'"$${MYSQL_ROOT_PASSWORD}"'",
+            "company_name":"Growatt",
+            "company_abbr":"GRT",
+            "chart_of_accounts":"Brasileira - Planilha de Contas",
+            "fy_start_date":"'"$FY_START"'",
+            "fy_end_date":"'"$FY_END"'",
+            "setup_demo":0
+          }' \
+          http://backend-service-test:8000/api/method/frappe.desk.page.setup_wizard.setup_wizard.setup_complete;
+        rc=$?;
+        set -e;
+
+        if [ $rc -ne 0 ]; then
+          echo "😢 automated setup_wizard failed.";
+        else
+          echo "🚀 automated setup_wizard finished.";
+        fi
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
@@ -193,93 +231,6 @@ services:
     <<: *redis-defaults
     volumes:
       - frappe-redis-cache-data-test:/data
-
-  post-setup-service-test:
-    <<: *frappe-image-network-defaults
-    deploy:
-      restart_policy:
-        condition: none
-    depends_on:
-      - create-site-service-test
-      - redis-cache-service-test
-      - redis-queue-service-test
-      - db-service-test
-    environment:
-      SITE_NAME: erp-test.growatt.app
-      ADMIN_PASS: ${MYSQL_ROOT_PASSWORD}         # reuse for simplicity
-    volumes:
-      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-      - services-logs-data-test:/home/frappe/frappe-bench/logs
-    entrypoint: [bash, -lc]
-    command: >
-      set -e;
-      wait-for-it -t 300 db-service-test:3306;
-      wait-for-it -t 300 redis-cache-service-test:6379;
-      wait-for-it -t 300 redis-queue-service-test:6379;
-
-      until bench --site "$SITE_NAME" list-apps 2>/dev/null | grep -q "frappe"; do
-        echo "Aguardando frappe estar instalado em $SITE_NAME…";
-        sleep 5;
-      done;
-
-      until bench --site "$SITE_NAME" list-apps 2>/dev/null | grep -q "erpnext"; do
-        echo "Aguardando erpnext estar instalado em $SITE_NAME…";
-        sleep 5;
-      done;
-
-      # idempotency: skip if we already ran
-      if bench --site "$SITE_NAME" get-config | grep -q '"bootstrap_done": 1'; then
-        echo "Bootstrap already done"; exit 0; fi;
-
-      Y=$(date +%Y);
-      FY_START="$Y-01-01";
-      FY_END="$Y-12-31";
-
-      echo "Running setup_wizard.setup_complete…";
-      bench --site "$SITE_NAME" execute \
-        frappe.desk.page.setup_wizard.setup_wizard.setup_complete \
-        --kwargs "$(cat <<EOF | jq -c .
-        {
-          "currency": "BRL",
-          "full_name": "Administrator",
-          "company_name": "Growatt",
-          "timezone": "America/Sao_Paulo",
-          "company_abbr": "GRT",
-          "domains": ["Distribution"],
-          "country": "Brazil",
-          "fy_start_date": "$FY_START",
-          "fy_end_date": "$FY_END",
-          "language": "english",
-          "company_tagline": "Growatt",
-          "email": "admin@growatt.app",
-          "password": "$ADMIN_PASS",
-          "chart_of_accounts": "Standard with Numbers",
-          "bank_account": "Primary Checking"
-        }
-        EOF
-      )";
-
-      echo "Enabling all roles & domains…";
-      bench --site "$SITE_NAME" execute erpnext.setup.utils.enable_all_roles_and_domains;
-      # echo "Enabling ERPNEXT defaults for tests…";
-      # bench --site "$SITE_NAME" execute erpnext.setup.utils.set_defaults_for_tests;
-
-      echo "Homepage -> login…";
-      bench --site "$SITE_NAME" mariadb -e \
-        "update \`tabWebsite Settings\` set home_page='login' where name='Website Settings'";
-
-      echo "Marking all Module Onboarding as complete…";
-      bench --site "$SITE_NAME" mariadb -e \
-        "update \`tabModule Onboarding\` set is_complete=1";
-
-      echo "Clear cache…";
-      bench --site "$SITE_NAME" clear-cache;
-
-      echo "Marking bootstrap_done in site_config…";
-      bench --site "$SITE_NAME" set-config bootstrap_done 1;
-
-      echo "Done ✅";
-
 
 volumes:
   services-logs-data-test:
