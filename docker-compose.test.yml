@@ -114,50 +114,49 @@ services:
         # LUAN CODE BELOW 
         # DO NOT TOUCHY WITHOUT ASKING FIRST
 
-        sleep 5
-        echo "Running automated setup_wizard..."
+        sleep 5;
+        echo "Running automated setup_wizard...";
 
-        Y=$(date +%Y)
-        FY_START="$Y-01-01"
-        FY_END="$Y-12-31"
+        Y=$$(date +%Y);
+        FY_START="$$Y-01-01";
+        FY_END="$$Y-12-31";
 
-        set +e
-        resp="$(
-          curl -sS -L --fail-with-body \
-            -u "Administrator:${ADMIN_PASSWORD}" \
-            -H "Host: ${SITE_NAME}" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"currency\":\"BRL\",
-              \"country\":\"Brazil\",
-              \"timezone\":\"America/Sao_Paulo\",
-              \"language\":\"English\",
-              \"full_name\":\"Luan Gabriel\",
-              \"email\":\"lgotcfg@gmail.com\",
-              \"password\":\"${ADMIN_PASSWORD}\",
-              \"company_name\":\"Growatt\",
-              \"company_abbr\":\"GRT\",
-              \"chart_of_accounts\":\"Brazil - Chart of Accounts\",
-              \"fy_start_date\":\"${FY_START}\",
-              \"fy_end_date\":\"${FY_END}\",
-              \"setup_demo\":0
-            }" \
-            http://backend-service-test:8000/api/method/frappe.desk.page.setup_wizard.setup_wizard.setup_complete \
-            -w $'\n%{http_code}'
-        )"
-        rc=$?
-        set -e
+        set +e;
+        resp="$$(curl -sS -L --fail-with-body \
+          -u \"Administrator:$${ADMIN_PASSWORD}\" \
+          -H \"Host: $${SITE_NAME}\" \
+          -H \"Content-Type: application/json\" \
+          -d '{
+            \"currency\":\"BRL\",
+            \"country\":\"Brazil\",
+            \"timezone\":\"America/Sao_Paulo\",
+            \"language\":\"English\",
+            \"full_name\":\"Luan Gabriel\",
+            \"email\":\"lgotcfg@gmail.com\",
+            \"password\":\"'\"$${ADMIN_PASSWORD}\"'\",
+            \"company_name\":\"Growatt\",
+            \"company_abbr\":\"GRT\",
+            \"chart_of_accounts\":\"Brazil - Chart of Accounts\",
+            \"fy_start_date\":\"'\"$$FY_START\"'\",
+            \"fy_end_date\":\"'\"$$FY_END\"'\",
+            \"setup_demo\":0
+          }' \
+          http://backend-service-test:8000/api/method/frappe.desk.page.setup_wizard.setup_wizard.setup_complete \
+          -w $'\\n%{http_code}')";
 
-        http_code="${resp##*$'\n'}"
-        body="${resp%$'\n'*}"
+        rc=$$?;
+        set -e;
 
-        if [ "${rc:-1}" -ne 0 ] || [ "${http_code:-599}" -ge 400 ]; then
-          echo "😢 automated setup_wizard failed. curl=${rc} http=${http_code}"
-          echo "---- response body ----"
-          echo "$body"
+        http_code="$${resp##*$'\\n'}";
+        body="$${resp%$'\\n'*}";
+
+        if [ "$${rc:-1}" -ne 0 ] || [ "$${http_code:-599}" -ge 400 ]; then
+          echo "😢 automated setup_wizard failed. curl=$$rc http=$$http_code";
+          echo "---- response body ----";
+          echo "$$body";
         else
-          echo "🚀 automated setup_wizard finished."
-        fi
+          echo "🚀 automated setup_wizard finished.";
+        fi;
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
