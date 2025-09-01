@@ -116,6 +116,8 @@ services:
         
         echo "Waiting for backend to be available...";
         wait-for-it -t 120 backend-service-test:8000;
+        echo "Backend is available. Waiting 5 seconds for it to stabilize...";
+        sleep 5;
         echo "Running automated setup_wizard...";
         
         # 2. Usar '$' para variáveis, não '$$';
