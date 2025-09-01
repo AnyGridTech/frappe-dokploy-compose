@@ -1,4 +1,5 @@
 #!/bin/bash
+# ./auto_setup_wizard.sh <backend-hostname>
 set -e
 
 BACKEND_HOSTNAME="$1"
@@ -21,7 +22,7 @@ echo "Running automated setup_wizard..."
 
 Y=$(date +%Y)
 FY_START="$Y-01-01"
-FY_END="$Y-01-31"
+FY_END="$Y-12-31"
 
 read -r -d '' JSON_BODY << EOF
 {
@@ -43,7 +44,7 @@ EOF
 
 set +e
 # 3. Usa o hostname dinâmico na chamada curl.
-http_code=$(curl -sS -L \
+http_code=$(curl -v -sS -L \
   -o body.tmp \
   -w '%{http_code}' \
   -u "Administrator:$MYSQL_ROOT_PASSWORD" \
@@ -66,5 +67,5 @@ if [ "$rc" -ne 0 ] || [ "$http_code" -ge 400 ]; then
   echo "$body"
   exit 1
 else
-  echo "🚀 automated setup_wizard finished successfully for environment: $APP_ENV"
+  echo "🚀 automated setup_wizard finished successfully for backend: $BACKEND_HOSTNAME"
 fi
