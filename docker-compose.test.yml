@@ -110,11 +110,12 @@ services:
           --db-root-username=root --db-root-password=$${MYSQL_ROOT_PASSWORD} \
           --install-app erpnext \
           --set-default erp-test.growatt.app;
-        bash ./auto_setup_wizard.sh
+        bash ./auto_setup_wizard.sh backend-service-test
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
+      - ./auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh
     environment:
       SITE_NAME: erp-test.growatt.app
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
