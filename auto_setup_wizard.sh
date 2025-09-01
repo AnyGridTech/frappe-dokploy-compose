@@ -26,7 +26,7 @@ FY_END="$Y-12-31"
 
 # Use jq to safely construct the JSON body
 # The --arg flag handles escaping of any special characters in the password
-JSON_BODY=$(jq -n \
+KWARGS=$(jq -n \
   --arg currency "BRL" \
   --arg country "Brazil" \
   --arg timezone "America/Sao_Paulo" \
@@ -56,8 +56,9 @@ JSON_BODY=$(jq -n \
     "setup_demo": $setup_demo
   }')
 
-echo "$JSON_BODY"
+echo "KWARGS:"
+echo "$KWARGS"
 
 echo "--- Submitting Setup Wizard Data ---"
-bench --site erp-test.growatt.app execute frappe.desk.page.setup_wizard.setup_wizard.setup_complete --kwargs "${JSON_BODY}"
+bench --site erp-test.growatt.app execute frappe.desk.page.setup_wizard.setup_wizard.setup_complete --kwargs "${KWARGS}"
 echo "--- Setup Wizard Complete ---"
