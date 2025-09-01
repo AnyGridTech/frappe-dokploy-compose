@@ -122,8 +122,9 @@ services:
         FY_START="$$Y-01-01";
         FY_END="$$Y-12-31";
 
-        # Use um Here Document para criar o JSON de forma segura e legível
-        JSON_BODY=$$(cat <<EOF
+        # Método robusto para ler um bloco de texto para uma variável
+        # O EOF sem aspas permite a expansão das variáveis $$ dentro do bloco
+        read -r -d '' JSON_BODY << EOF
         {
             "currency": "BRL",
             "country": "Brazil",
@@ -140,10 +141,9 @@ services:
             "setup_demo": 0
         }
         EOF
-        )
 
         set +e;
-        # A variável JSON_BODY já está formatada, não precisa de aspas extras no -d
+        # Agora a variável JSON_BODY contém o JSON formatado corretamente
         resp=$$(curl -sS -L --fail-with-body \
           -u "Administrator:$${MYSQL_ROOT_PASSWORD}" \
           -H "Host: $${SITE_NAME}" \
@@ -159,6 +159,9 @@ services:
 
         if [ "$${rc:-1}" -ne 0 ] || [ "$${http_code:-599}" -ge 400 ]; then
           echo "😢 automated setup_wizard failed. curl=$$rc http=$$http_code";
+          # Opcional: Imprimir a variável para debug
+          # echo "--- Sent JSON Body ---";
+          # echo "$$JSON_BODY";
           echo "---- response body ----";
           echo "$$body";
         else
