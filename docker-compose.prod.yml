@@ -105,11 +105,17 @@ services:
           fi;
         done;
         echo "sites/common_site_config.json found";
-        bench new-site --mariadb-user-host-login-scope='%' --admin-password=$${MYSQL_ROOT_PASSWORD} --db-root-username=root --db-root-password=$${MYSQL_ROOT_PASSWORD} --install-app erpnext --set-default erp-prod.growatt.app
+        bench new-site --mariadb-user-host-login-scope='%' \
+          --admin-password=$${MYSQL_ROOT_PASSWORD} \
+          --db-root-username=root --db-root-password=$${MYSQL_ROOT_PASSWORD} \
+          --install-app erpnext \
+          --set-default erp-prod.growatt.app;
+        bash ./auto_setup_wizard.sh backend-service-prod
     volumes:
       - frappe-code-data-prod:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
       - services-logs-data-prod:/home/frappe/frappe-bench/logs
+      - ./auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh:ro
     environment:
       SITE_NAME: erp-prod.growatt.app
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
