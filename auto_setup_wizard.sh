@@ -44,7 +44,7 @@ EOF
 
 set +e
 # 3. Usa o hostname dinâmico na chamada curl.
-http_code=$(curl -v -sS -L \
+http_code=$(curl -v -L \
   -o body.tmp \
   -w '%{http_code}' \
   -u "Administrator:$MYSQL_ROOT_PASSWORD" \
