@@ -124,23 +124,7 @@ services:
 
         # Método robusto para ler um bloco de texto para uma variável
         # O EOF sem aspas permite a expansão das variáveis $$ dentro do bloco
-        read -r -d '' JSON_BODY << EOF
-        {
-            "currency": "BRL",
-            "country": "Brazil",
-            "timezone": "America/Sao_Paulo",
-            "language": "English",
-            "full_name": "Luan Gabriel",
-            "email": "lgotcfg@gmail.com",
-            "password": "$${MYSQL_ROOT_PASSWORD}",
-            "company_name": "Growatt",
-            "company_abbr": "GRT",
-            "chart_of_accounts": "Brazil - Chart of Accounts",
-            "fy_start_date": "$$FY_START",
-            "fy_end_date": "$$FY_END",
-            "setup_demo": 0
-        }
-        EOF
+        JSON_BODY="{\"currency\": \"BRL\", \"country\": \"Brazil\", \"timezone\": \"America/Sao_Paulo\", \"language\": \"English\", \"full_name\": \"Luan Gabriel\", \"email\": \"lgotcfg@gmail.com\", \"password\": \"$${MYSQL_ROOT_PASSWORD}\", \"company_name\": \"Growatt\", \"company_abbr\": \"GRT\", \"chart_of_accounts\": \"Brazil - Chart of Accounts\", \"fy_start_date\": \"$$FY_START\", \"fy_end_date\": \"$$FY_END\", \"setup_demo\": 0}";
 
         set +e;
         # Agora a variável JSON_BODY contém o JSON formatado corretamente
