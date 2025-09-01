@@ -127,19 +127,18 @@ services:
         
         JSON_BODY="{\"currency\": \"BRL\", \"country\": \"Brazil\", \"timezone\": \"America/Sao_Paulo\", \"language\": \"English\", \"full_name\": \"Luan Gabriel\", \"email\": \"lgotcfg@gmail.com\", \"password\": \"${MYSQL_ROOT_PASSWORD}\", \"company_name\": \"Growatt\", \"company_abbr\": \"GRT\", \"chart_of_accounts\": \"Brazil - Chart of Accounts\", \"fy_start_date\": \"$FY_START\", \"fy_end_date\": \"$FY_END\", \"setup_demo\": 0}";
         
-        # -o body.tmp      -> Salva o corpo da resposta no arquivo body.tmp
-        # -w '%{http_code}' -> Escreve o código HTTP no stdout
-        http_code=$(curl -sS -L \
+        set +e;
+        curl -sS -L \
           -o body.tmp \
-          -w '%{http_code}' \
           -u "Administrator:${MYSQL_ROOT_PASSWORD}" \
           -H "Host: ${SITE_NAME}" \
           -H "Content-Type: application/json" \
           -d "$JSON_BODY" \
-          http://backend-service-test:8000/api/method/frappe.desk.page.setup_wizard.setup_wizard.setup_complete);
+          http://backend-service-test:8000/api/method/frappe.desk.page.setup_wizard.setup_wizard.setup_complete \
+          -w '%{http_code}';
         rc=$?;
         set -e;
-
+        
         # ---- INÍCIO DO BLOCO DE DEBUG EXPLÍCITO ----
         echo ""; # Linha em branco para separar
         echo "==================== DEBUGGING OUTPUT ====================";
@@ -152,9 +151,6 @@ services:
         echo "========================================================";
         echo ""; # Linha em branco para separar
         # ---- FIM DO BLOCO DE DEBUG ----
-
-        body=$(cat body.tmp);
-        rm -f body.tmp;
         
         if [ "${rc:-1}" -ne 0 ] || [ "${http_code:-599}" -ge 400 ]; then
           echo "😢 automated setup_wizard failed. curl=$rc http=$http_code";
