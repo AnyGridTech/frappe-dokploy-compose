@@ -58,8 +58,8 @@ KWARGS=$(jq -n \
     }
   }')
 
-echo "KWARGS:"
-echo "$KWARGS"
+echo "KWARGS (senha oculta):"
+echo "$KWARGS" | jq '.args.password = "**********"'
 
 echo "--- Submitting Setup Wizard Data ---"
 bench --site erp-test.growatt.app execute frappe.desk.page.setup_wizard.setup_wizard.setup_complete --kwargs "${KWARGS}"
