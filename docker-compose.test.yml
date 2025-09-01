@@ -134,7 +134,7 @@ services:
           -H "Content-Type: application/json" \
           -d "$$JSON_BODY" \
           http://backend-service-test:8000/api/method/frappe.desk.page.setup_wizard.setup_wizard.setup_complete \
-          -w $'\\n%{http_code}')"
+          -w '\n%{http_code}')"
         rc=$$?;
         set -e;
 
