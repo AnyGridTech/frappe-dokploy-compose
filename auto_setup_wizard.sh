@@ -41,19 +41,21 @@ KWARGS=$(jq -n \
   --arg fy_end_date "$FY_END" \
   --argjson setup_demo 0 \
   '{
-    "currency": $currency,
-    "country": $country,
-    "timezone": $timezone,
-    "language": $language,
-    "full_name": $full_name,
-    "email": $email,
-    "password": $password,
-    "company_name": $company_name,
-    "company_abbr": $company_abbr,
-    "chart_of_accounts": $chart_of_accounts,
-    "fy_start_date": $fy_start_date,
-    "fy_end_date": $fy_end_date,
-    "setup_demo": $setup_demo
+    "args": {
+      "currency": $currency,
+      "country": $country,
+      "timezone": $timezone,
+      "language": $language,
+      "full_name": $full_name,
+      "email": $email,
+      "password": $password,
+      "company_name": $company_name,
+      "company_abbr": $company_abbr,
+      "chart_of_accounts": $chart_of_accounts,
+      "fy_start_date": $fy_start_date,
+      "fy_end_date": $fy_end_date,
+      "setup_demo": $setup_demo
+    }
   }')
 
 echo "KWARGS:"
