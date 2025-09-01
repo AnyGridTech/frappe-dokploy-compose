@@ -122,24 +122,29 @@ services:
         FY_START="$$Y-01-01";
         FY_END="$$Y-12-31";
 
-        JSON_BODY="{ \\
-          \"currency\": \"BRL\", \\
-          \"country\": \"Brazil\", \\
-          \"timezone\": \"America/Sao_Paulo\", \\
-          \"language\": \"English\", \\
-          \"full_name\": \"Luan Gabriel\", \\
-          \"email\": \"lgotcfg@gmail.com\", \\
-          \"password\": \"$${MYSQL_ROOT_PASSWORD}\", \\
-          \"company_name\": \"Growatt\", \\
-          \"company_abbr\": \"GRT\", \\
-          \"chart_of_accounts\": \"Brazil - Chart of Accounts\", \\
-          \"fy_start_date\": \"$$FY_START\", \\
-          \"fy_end_date\": \"$$FY_END\", \\
-          \"setup_demo\": 0 \\
-        }"
+        # Use um Here Document para criar o JSON de forma segura e legível
+        JSON_BODY=$$(cat <<EOF
+        {
+            "currency": "BRL",
+            "country": "Brazil",
+            "timezone": "America/Sao_Paulo",
+            "language": "English",
+            "full_name": "Luan Gabriel",
+            "email": "lgotcfg@gmail.com",
+            "password": "$${MYSQL_ROOT_PASSWORD}",
+            "company_name": "Growatt",
+            "company_abbr": "GRT",
+            "chart_of_accounts": "Brazil - Chart of Accounts",
+            "fy_start_date": "$$FY_START",
+            "fy_end_date": "$$FY_END",
+            "setup_demo": 0
+        }
+        EOF
+        )
 
         set +e;
-        resp="$$(curl -sS -L --fail-with-body \
+        # A variável JSON_BODY já está formatada, não precisa de aspas extras no -d
+        resp=$$(curl -sS -L --fail-with-body \
           -u "Administrator:$${MYSQL_ROOT_PASSWORD}" \
           -H "Host: $${SITE_NAME}" \
           -H "Content-Type: application/json" \
