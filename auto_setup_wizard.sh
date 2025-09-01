@@ -56,6 +56,14 @@ rc=$?
 set -e
 
 body=$(cat body.tmp)
+
+echo "Curl exit code: $rc"
+echo "HTTP status: $http_code"
+echo "Host header: ${SITE_NAME:-not_set}"
+echo "MYSQL_ROOT_PASSWORD length: ${#MYSQL_ROOT_PASSWORD}"
+echo "---- Resposta recebida ----"
+cat body.tmp
+
 rm -f body.tmp
 
 # Checagem final
