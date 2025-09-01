@@ -14,35 +14,50 @@ fi
 
 echo "--- Iniciando setup wizard para o backend: $BACKEND_HOSTNAME ---"
 
-echo "Waiting for backend (backend-service-test) to be fully available...";
-wait-for-it -t 120 backend-service-test:8000;
-echo "Backend is available. Waiting 5 seconds for it to stabilize...";
-sleep 5;
+echo "Waiting for backend ($BACKEND_HOSTNAME) to be available..."
+wait-for-it -t 120 "$BACKEND_HOSTNAME:8000"
+echo "Backend is available. Waiting 5 seconds for it to stabilize..."
+sleep 5
+echo "Running automated setup_wizard..."
 
-echo "Running automated setup_wizard via bench execute...";
-# Note the double $$ to escape the $ for docker-compose
-Y=$$(date +%Y);
-FY_START="$${Y}-01-01";
-FY_END="$${Y}-12-31";
+Y=$(date +%Y)
+FY_START="$Y-01-01"
+FY_END="$Y-12-31"
 
-# Safely create JSON for --kwargs using jq
-# Note the $$ escape for variables passed to the shell inside the container
-JSON_KWARGS=$$(jq -n \
+# Use jq to safely construct the JSON body
+# The --arg flag handles escaping of any special characters in the password
+JSON_BODY=$(jq -n \
   --arg currency "BRL" \
   --arg country "Brazil" \
   --arg timezone "America/Sao_Paulo" \
   --arg language "English" \
   --arg full_name "Luan Gabriel" \
   --arg email "lgotcfg@gmail.com" \
-  --arg password "$${MYSQL_ROOT_PASSWORD}" \
+  --arg password "$MYSQL_ROOT_PASSWORD" \
   --arg company_name "Growatt" \
   --arg company_abbr "GRT" \
   --arg chart_of_accounts "Brazil - Chart of Accounts" \
-  --arg fy_start_date "$${FY_START}" \
-  --arg fy_end_date "$${FY_END}" \
+  --arg fy_start_date "$FY_START" \
+  --arg fy_end_date "$FY_END" \
   --argjson setup_demo 0 \
-  '{ "currency": $currency, "country": $country, "timezone": $timezone, "language": $language, "full_name": $full_name, "email": $email, "password": $password, "company_name": $company_name, "company_abbr": $company_abbr, "chart_of_accounts": $chart_of_accounts, "fy_start_date": $fy_start_date, "fy_end_date": $fy_end_date, "setup_demo": $setup_demo }');
+  '{
+    "currency": $currency,
+    "country": $country,
+    "timezone": $timezone,
+    "language": $language,
+    "full_name": $full_name,
+    "email": $email,
+    "password": $password,
+    "company_name": $company_name,
+    "company_abbr": $company_abbr,
+    "chart_of_accounts": $chart_of_accounts,
+    "fy_start_date": $fy_start_date,
+    "fy_end_date": $fy_end_date,
+    "setup_demo": $setup_demo
+  }')
 
-echo "--- Submitting Setup Wizard Data ---";
-bench --site erp-test.growatt.app execute frappe.desk.page.setup_wizard.setup_wizard.setup_complete --kwargs "$${JSON_KWARGS}";
-echo "--- Setup Wizard Complete ---";
+echo "$JSON_BODY"
+
+echo "--- Submitting Setup Wizard Data ---"
+bench --site erp-test.growatt.app execute frappe.desk.page.setup_wizard.setup_wizard.setup_complete --kwargs "${JSON_BODY}"
+echo "--- Setup Wizard Complete ---"
