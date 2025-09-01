@@ -20,6 +20,27 @@ echo "Backend is available. Waiting 5 seconds for it to stabilize..."
 sleep 5
 echo "Running automated setup_wizard..."
 
+echo "Attempting to login as Administrator to establish a session..."
+http_code_login=$(curl -L \
+  -o body_login.tmp \
+  -w '%{http_code}' \
+  -c "$COOKIE_JAR" \
+  -H "Host: $SITE_NAME" \
+  -X POST "http://${BACKEND_HOSTNAME}:8000/api/method/login" \
+  -d "usr=Administrator" \
+  --data-urlencode "pwd=$MYSQL_ROOT_PASSWORD")
+
+if [ "$http_code_login" != "200" ]; then
+  echo "😢 Login failed! HTTP status: $http_code_login"
+  echo "---- Login response ----"
+  cat body_login.tmp
+  rm -f body_login.tmp "$COOKIE_JAR"
+  exit 1
+else
+  echo "🚀 Login successful. Session cookie stored."
+fi
+rm -f body_login.tmp
+
 Y=$(date +%Y)
 FY_START="$Y-01-01"
 FY_END="$Y-12-31"
@@ -59,11 +80,10 @@ JSON_BODY=$(jq -n \
 echo "$JSON_BODY"
 
 set +e
-# 3. Usa o hostname dinâmico na chamada curl.
-http_code=$(curl -v -L \
-  -o body.tmp \
+http_code_setup=$(curl -v -L \
+  -o body_setup.tmp \
   -w '%{http_code}' \
-  -u "Administrator:$MYSQL_ROOT_PASSWORD" \
+  -b "$COOKIE_JAR" \
   -H "Host: $SITE_NAME" \
   -H "Content-Type: application/json" \
   -d "$JSON_BODY" \
@@ -71,24 +91,18 @@ http_code=$(curl -v -L \
 rc=$?
 set -e
 
-body=$(cat body.tmp)
+body_setup=$(cat body_setup.tmp)
+rm -f body_setup.tmp "$COOKIE_JAR"
 
 echo "Curl exit code: $rc"
-echo "HTTP status: $http_code"
-echo "Host header: ${SITE_NAME:-not_set}"
-echo "MYSQL_ROOT_PASSWORD length: ${#MYSQL_ROOT_PASSWORD}"
-echo "---- Resposta recebida ----"
-cat body.tmp
+echo "HTTP status: $http_code_setup"
 
-rm -f body.tmp
-
-# Checagem final
-if [ "$rc" -ne 0 ] || [ "$http_code" -ge 400 ]; then
-  echo "😢 automated setup_wizard failed. curl exit code=\"$rc\" http_status=\"$http_code\""
+if [ "$rc" -ne 0 ] || [ "$http_code_setup" -ge 400 ]; then
+  echo "😢 automated setup_wizard failed."
   echo "---- JSON enviado ----"
   echo "$JSON_BODY"
   echo "---- Resposta recebida ----"
-  echo "$body"
+  echo "$body_setup"
   exit 1
 else
   echo "🚀 automated setup_wizard finished successfully for backend: $BACKEND_HOSTNAME"
