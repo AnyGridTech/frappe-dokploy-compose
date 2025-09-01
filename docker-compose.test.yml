@@ -114,41 +114,40 @@ services:
         # LUAN CODE BELOW 
         # DO NOT TOUCHY WITHOUT ASKING FIRST
         
-        echo "Waiting for backend to be available..."; \
-        wait-for-it -t 120 backend-service-test:8000; \
-        echo "Running automated setup_wizard..."; \
-        \
-        Y=$$(date +%Y); \
-        FY_START="$$Y-01-01"; \
-        FY_END="$$Y-01-31"; \
-        \
-        JSON_BODY="{\"currency\": \"BRL\", \"country\": \"Brazil\", \"timezone\": \"America/Sao_Paulo\", \"language\": \"English\", \"full_name\": \"Luan Gabriel\", \"email\": \"lgotcfg@gmail.com\", \"password\": \"$${MYSQL_ROOT_PASSWORD}\", \"company_name\": \"Growatt\", \"company_abbr\": \"GRT\", \"chart_of_accounts\": \"Brazil - Chart of Accounts\", \"fy_start_date\": \"$$FY_START\", \"fy_end_date\": \"$$FY_END\", \"setup_demo\": 0}"; \
-        \
-        set +e; \
+        echo "Waiting for backend to be available..."
+        wait-for-it -t 120 backend-service-test:8000
+        echo "Running automated setup_wizard..."
+        
+        # 2. Usar '$' para variáveis, não '$$'
+        Y=$(date +%Y)
+        FY_START="$Y-01-01"
+        FY_END="$Y-01-31" # Nota: Janeiro tem 31 dias, corrigi aqui.
+        
+        JSON_BODY="{\"currency\": \"BRL\", \"country\": \"Brazil\", \"timezone\": \"America/Sao_Paulo\", \"language\": \"English\", \"full_name\": \"Luan Gabriel\", \"email\": \"lgotcfg@gmail.com\", \"password\": \"${MYSQL_ROOT_PASSWORD}\", \"company_name\": \"Growatt\", \"company_abbr\": \"GRT\", \"chart_of_accounts\": \"Brazil - Chart of Accounts\", \"fy_start_date\": \"$FY_START\", \"fy_end_date\": \"$FY_END\", \"setup_demo\": 0}"
+        
+        set +e
         curl -sS -L --fail-with-body \
-          -u "Administrator:$${MYSQL_ROOT_PASSWORD}" \
-          -H "Host: $${SITE_NAME}" \
+          -u "Administrator:${MYSQL_ROOT_PASSWORD}" \
+          -H "Host: ${SITE_NAME}" \
           -H "Content-Type: application/json" \
-          -d "$$JSON_BODY" \
+          -d "$JSON_BODY" \
           http://backend-service-test:8000/api/method/frappe.desk.page.setup_wizard.setup_wizard.setup_complete \
-          -w '\n%{http_code}' > response.tmp; \
-        rc=$$?; \
-        set -e; \
-        \
-        http_code=$$(cat response.tmp | tail -n 1); \
-        body=$$(cat response.tmp | sed '$$d'); \
-        \
-        # Limpa o arquivo temporário AGORA.
-        # AQUI ESTAVA O ERRO: FALTAVA O PONTO E VÍRGULA NO FINAL
-        rm -f response.tmp; \
-        \
-        if [ "$${rc:-1}" -ne 0 ] || [ "$${http_code:-599}" -ge 400 ]; then \
-          echo "😢 automated setup_wizard failed. curl=$$rc http=$$http_code"; \
-          echo "---- response body ----"; \
-          echo "$$body"; \
-          exit 1; \
-        else \
-          echo "🚀 automated setup_wizard finished."; \
+          -w '\n%{http_code}' > response.tmp
+        rc=$?
+        set -e
+        
+        http_code=$(cat response.tmp | tail -n 1)
+        body=$(cat response.tmp | sed '$$d') # $$ em sed é correto para significar "última linha"
+        
+        rm -f response.tmp
+        
+        if [ "${rc:-1}" -ne 0 ] || [ "${http_code:-599}" -ge 400 ]; then
+          echo "😢 automated setup_wizard failed. curl=$rc http=$http_code"
+          echo "---- response body ----"
+          echo "$body"
+          exit 1
+        else
+          echo "🚀 automated setup_wizard finished."
         fi
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
