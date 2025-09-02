@@ -113,6 +113,10 @@ services:
         bash ./auto_setup_wizard.sh backend-service-test || true;
         bench get-app https://github.com/rtCamp/frappe-comment-xt.git;
         bench --site erp-test.growatt.app install-app frappe_comment_xt;
+        bench --site erp-test.growatt.app clear-cache;
+        bench --site erp-test.growatt.app clear-website-cache;
+        bench --site erp-test.growatt.app migrate;
+        bench restart;
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
