@@ -22,6 +22,26 @@ x-redis-defaults: &redis-defaults
 
 # --- Services --- #
 services:
+  frappe-code-bootstrapper:
+    <<: *frappe-defaults
+    deploy:
+      restart_policy:
+        condition: none
+    volumes:
+      - frappe-code-data-test:/mnt/apps
+    entrypoint: [bash, -lc]
+    command: |
+      set -e
+      echo "🔎 Checando se o bind de apps no host está populado..."
+      if [ ! -d /mnt/apps/frappe ] || [ ! -d /mnt/apps/erpnext ]; then
+        echo "📦 Populando /mnt/apps a partir da imagem..."
+        cp -r /home/frappe/frappe-bench/apps/* /mnt/apps/
+        # opcional: garantir dono/perm
+        chown -R 1000:1000 /mnt/apps || true
+        echo "✅ apps/ populado."
+      else
+        echo "✅ apps/ já está populado."
+      fi
   backend-service-test:
     <<: *frappe-defaults
     volumes:
