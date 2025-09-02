@@ -111,7 +111,8 @@ services:
           --install-app erpnext \
           --set-default erp-test.growatt.app;
         bash ./auto_setup_wizard.sh backend-service-test
-        bash ./install_custom_app.sh erp-test.growatt.app growatt_custom https://troyaks1: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@github.com/AnyGridTech/growatt_custom main 
+        bench get-app https://github.com/rtCamp/frappe-comment-xt.git
+        bench --site erp-test.growatt.app install-app frappe_comment_xt
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps/frappe
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
