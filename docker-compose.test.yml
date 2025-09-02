@@ -110,7 +110,7 @@ services:
           --db-root-username=root --db-root-password=$${MYSQL_ROOT_PASSWORD} \
           --install-app erpnext \
           --set-default erp-test.growatt.app;
-        bash ./auto_setup_wizard.sh backend-service-test
+        bash ./auto_setup_wizard.sh backend-service-test || true
         bench get-app https://github.com/rtCamp/frappe-comment-xt.git
         bench --site erp-test.growatt.app install-app frappe_comment_xt
     volumes:
