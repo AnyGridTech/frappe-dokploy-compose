@@ -1,7 +1,5 @@
 #!/bin/bash
 # ./auto_setup_wizard.sh <backend-hostname>
-set -x
-trap 'echo "⚠️ Linha $LINENO falhou, mas continuando..."' ERR
 set -e
 
 BACKEND_HOSTNAME="$1"
