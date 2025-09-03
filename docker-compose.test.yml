@@ -45,7 +45,8 @@ services:
   configurator-service-test:
     <<: *frappe-image-network-defaults
     depends_on:
-      - initial-setup-test
+      initial-setup-test:
+        condition: service_healthy
     deploy:
       restart_policy:
         condition: none
