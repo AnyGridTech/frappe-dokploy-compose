@@ -1,4 +1,5 @@
 #!/bin/bash
+# ./initial_setup.sh
 set -e
 echo "🔎 Checking if bind is already populated..."
 if [ ! -d /mnt/apps/frappe ] || [ ! -d /mnt/apps/erpnext ]; then

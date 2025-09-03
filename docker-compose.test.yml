@@ -23,6 +23,7 @@ x-redis-defaults: &redis-defaults
 services:
   initial-setup-test:
     <<: *frappe-defaults
+    user: "0:0"
     deploy:
       restart_policy:
         condition: none
