@@ -63,6 +63,7 @@ KWARGS=$(jq -n \
 echo "KWARGS (senha oculta):"
 echo "$KWARGS" | jq '.args.password = "**********"'
 
-echo "--- Submitting Setup Wizard Data ---"
+echo "Submitting Setup Wizard Data..."
 bench --site "${SITE_NAME}" execute frappe.desk.page.setup_wizard.setup_wizard.setup_complete --kwargs "${KWARGS}"
-echo "--- Setup Wizard Complete ---"
+
+echo "Finished auto_setup_wizard.sh"

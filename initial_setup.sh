@@ -13,3 +13,5 @@ if [ ! -d /mnt/apps/frappe ] || [ ! -d /mnt/apps/erpnext ]; then
 else
   echo "✅ apps/ is already populated."
 fi
+
+echo "Finished initial_setup.sh"

@@ -24,3 +24,5 @@ bench --site "$SITE_NAME" migrate;
 
 echo "🔄 Restarting bench services..."
 bench restart;
+
+echo "Finished install_apps.sh"

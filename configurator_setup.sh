@@ -19,9 +19,6 @@ retry() {
   return 1
 }
 
-echo "Waiting 20 seconds for initial-setup to finish..."
-sleep 20
-
 echo "Creating sites/apps.txt"
 retry 10 5 "ls -1 apps > sites/apps.txt"
 
@@ -33,4 +30,4 @@ retry 5 5 "bench set-config -g redis_queue redis://$REDIS_QUEUE"
 retry 5 5 "bench set-config -g redis_socketio redis://$REDIS_QUEUE"
 retry 5 5 "bench set-config -gp socketio_port $SOCKETIO_PORT"
 
-echo "Finished configurator tasks"
+echo "Finished configurator_setup.sh"

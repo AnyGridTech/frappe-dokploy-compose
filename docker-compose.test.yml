@@ -27,16 +27,88 @@ services:
     deploy:
       restart_policy:
         condition: none
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        bash /initial_setup.sh;
+        touch /tmp/finished;
+        echo "✅ Container commands executed successfully";
     volumes:
       - frappe-code-data-test:/mnt/apps
       - ./initial_setup.sh:/initial_setup.sh
-    entrypoint: [bash, /initial_setup.sh]
-      
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/finished"]
+      interval: 5s
+      retries: 50
+      start_period: 10s
+
+  configurator-service-test:
+    <<: *frappe-image-network-defaults
+    depends_on:
+      - initial-setup-test
+    deploy:
+      restart_policy:
+        condition: none
+    entrypoint: [bash, -c]
+    command:
+      - >
+        bash ./configurator_setup.sh;
+        touch /tmp/finished;
+        echo "✅ Container commands executed successfully";
+    environment:
+      DB_HOST: db-service-test
+      DB_PORT: "3306"
+      REDIS_CACHE: redis-cache-service-test:6379
+      REDIS_QUEUE: redis-queue-service-test:6379
+      SOCKETIO_PORT: "9000"
+    volumes:
+      - ./configurator_setup.sh:/home/frappe/frappe-bench/configurator_setup.sh
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/finished"]
+      interval: 5s
+      retries: 50
+      start_period: 10s
+
+  create-site-service-test:
+    <<: *frappe-image-network-defaults
+    depends_on:
+      configurator-service-test:
+        condition: service_healthy
+    deploy:
+      restart_policy:
+        condition: none
+    entrypoint: [bash, -c]
+    command:
+      - >
+        bash ./create_site_setup.sh;
+        bash ./auto_setup_wizard.sh backend-service-test || true;
+        bash ./install_apps.sh erp-test.growatt.app || true;
+        touch /tmp/finished;
+        echo "✅ Container commands executed successfully";
+    volumes:
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+      - ./auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh
+      - ./install_apps.sh:/home/frappe/frappe-bench/install_apps.sh
+      - ./create_site_setup.sh:/home/frappe/frappe-bench/create_site_setup.sh
+    environment:
+      SITE_NAME: erp-test.growatt.app
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/finished"]
+      interval: 5s
+      retries: 50
+      start_period: 30s
+
   backend-service-test:
     <<: *frappe-defaults
     depends_on:
-      - initial-setup-test
-      - configurator-service-test
+      create-site-service-test:
+        condition: service_healthy
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
@@ -52,9 +124,8 @@ services:
       - frappe-network-test
       - dokploy-network
     depends_on:
-      - websocket-service-test
-      - initial-setup-test
-      - configurator-service-test
+      create-site-service-test:
+        condition: service_healthy
     command: [nginx-entrypoint.sh]
     environment:
       SITE_NAME: erp-test.growatt.app
@@ -69,74 +140,6 @@ services:
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
-
-  configurator-service-test:
-    <<: *frappe-image-network-defaults
-    depends_on:
-      - initial-setup-test
-    deploy:
-      restart_policy:
-        condition: none
-    entrypoint: [bash, /home/frappe/frappe-bench/configurator_setup.sh]
-    environment:
-      DB_HOST: db-service-test
-      DB_PORT: "3306"
-      REDIS_CACHE: redis-cache-service-test:6379
-      REDIS_QUEUE: redis-queue-service-test:6379
-      SOCKETIO_PORT: "9000"
-    volumes:
-      - ./configurator_setup.sh:/home/frappe/frappe-bench/configurator_setup.sh
-      - frappe-code-data-test:/home/frappe/frappe-bench/apps
-      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-      - services-logs-data-test:/home/frappe/frappe-bench/logs
-
-  create-site-service-test:
-    <<: *frappe-image-network-defaults
-    depends_on:
-      - initial-setup-test
-      - configurator-service-test
-    deploy:
-      restart_policy:
-        condition: none
-    entrypoint: [bash, -c]
-    command:
-      - >
-        echo "Waiting 20 seconds for initial-setup & configurator to finish...";
-        sleep 20;
-        wait-for-it -t 120 db-service-test:3306;
-        wait-for-it -t 120 redis-cache-service-test:6379;
-        wait-for-it -t 120 redis-queue-service-test:6379;
-        export start=`date +%s`;
-        export max_wait_time=200;
-        echo "Waiting for sites/common_site_config.json to be created";
-        until [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty"` ]] &&
-          [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_cache // empty"` ]] &&
-          [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_queue // empty"` ]];
-        do
-          sleep 2;
-          if (( `date +%s` - start > $max_wait_time )); then
-            echo "could not find sites/common_site_config.json with required keys";
-            exit 1;
-          fi;
-        done;
-        echo "sites/common_site_config.json found";
-        echo "Creating new site...";
-        bench new-site --mariadb-user-host-login-scope='%' \
-          --admin-password=$${MYSQL_ROOT_PASSWORD} \
-          --db-root-username=root --db-root-password=$${MYSQL_ROOT_PASSWORD} \
-          --install-app erpnext \
-          --set-default erp-test.growatt.app;
-        bash ./auto_setup_wizard.sh backend-service-test || true;
-        bash ./install_apps.sh erp-test.growatt.app || true;
-    volumes:
-      - frappe-code-data-test:/home/frappe/frappe-bench/apps
-      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-      - services-logs-data-test:/home/frappe/frappe-bench/logs
-      - ./auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh
-      - ./install_apps.sh:/home/frappe/frappe-bench/install_apps.sh
-    environment:
-      SITE_NAME: erp-test.growatt.app
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
   db-service-test:
     image: mariadb:10.6
