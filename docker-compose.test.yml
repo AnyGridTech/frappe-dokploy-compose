@@ -78,17 +78,43 @@ services:
       restart_policy:
         condition: none
     entrypoint: [bash, -c]
-    command:
-      - >
-        echo "Waiting 30 seconds for initial-setup to finish...";
-        sleep 30;
-        ls -1 apps > sites/apps.txt;
-        bench set-config -g db_host $$DB_HOST;
-        bench set-config -gp db_port $$DB_PORT;
-        bench set-config -g redis_cache "redis://$$REDIS_CACHE";
-        bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
-        bench set-config -g redis_socketio "redis://$$REDIS_QUEUE";
-        bench set-config -gp socketio_port $$SOCKETIO_PORT;
+    command: |
+      set -e
+
+      retry() {
+        local attempts=$1; shift
+        local delay=$1; shift
+        local cmd="$@"
+
+        for i in $(seq 1 $attempts); do
+          echo "➡️  Attempt $i/$attempts for command: $cmd"
+          if eval "$cmd"; then
+            echo "✅ Success on attempt $i"
+            return 0
+          fi
+          echo "❌ Failed (attempt $i), retrying in $delay sec..."
+          sleep $delay
+        done
+
+        echo "⛔ All $attempts attempts failed: $cmd"
+        return 1
+      }
+
+      echo "Waiting 30 seconds for initial-setup to finish..."
+      sleep 30
+
+      echo "Creating sites/apps.txt"
+      retry 5 5 "ls -1 apps > sites/apps.txt"
+
+      echo "Setting bench configurations"
+      retry 5 5 "bench set-config -g db_host $DB_HOST"
+      retry 5 5 "bench set-config -gp db_port $DB_PORT"
+      retry 5 5 "bench set-config -g redis_cache redis://$REDIS_CACHE"
+      retry 5 5 "bench set-config -g redis_queue redis://$REDIS_QUEUE"
+      retry 5 5 "bench set-config -g redis_socketio redis://$REDIS_QUEUE"
+      retry 5 5 "bench set-config -gp socketio_port $SOCKETIO_PORT"
+
+      echo "Finished configurator tasks"
     environment:
       DB_HOST: db-service-test
       DB_PORT: "3306"
@@ -111,7 +137,7 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        echo "Waiting 30 seconds for initial-setup to finish...";
+        echo "Waiting 30 seconds for initial-setup & configurator to finish...";
         sleep 30;
         wait-for-it -t 120 db-service-test:3306;
         wait-for-it -t 120 redis-cache-service-test:6379;
