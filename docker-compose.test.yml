@@ -80,8 +80,8 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        echo "Waiting 5 seconds for initial-setup to finish...";
-        sleep 5;
+        echo "Waiting 30 seconds for initial-setup to finish...";
+        sleep 30;
         ls -1 apps > sites/apps.txt;
         bench set-config -g db_host $$DB_HOST;
         bench set-config -gp db_port $$DB_PORT;
@@ -114,6 +114,8 @@ services:
         wait-for-it -t 120 db-service-test:3306;
         wait-for-it -t 120 redis-cache-service-test:6379;
         wait-for-it -t 120 redis-queue-service-test:6379;
+        echo "Waiting 30 seconds for initial-setup to finish...";
+        sleep 30;
         export start=`date +%s`;
         until [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty"` ]] &&
           [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_cache // empty"` ]] &&
