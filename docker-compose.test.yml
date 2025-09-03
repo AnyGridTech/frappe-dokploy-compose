@@ -164,7 +164,7 @@ services:
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
-        entrypoint: [bash, -c]
+    entrypoint: [bash, -c]
     command: 
       - > 
         bench setup requirements;
