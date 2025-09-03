@@ -123,6 +123,46 @@ services:
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
+    
+  queue-long-service-test:
+    <<: *frappe-defaults
+    depends_on:
+      create-site-service-test:
+        condition: service_completed_successfully
+    command: [bench, worker, --queue, "long,default,short"]
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  queue-short-service-test:
+    <<: *frappe-defaults
+    depends_on:
+      create-site-service-test:
+        condition: service_completed_successfully
+    command: [bench, worker, --queue, "short,default"]
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  scheduler-service-test:
+    <<: *frappe-defaults
+    depends_on:
+      create-site-service-test:
+        condition: service_completed_successfully
+    command: [bench, schedule]
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+
+  websocket-service-test:
+    <<: *frappe-defaults
+    depends_on:
+      create-site-service-test:
+        condition: service_completed_successfully
+    command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
+    volumes:
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
 
   db-service-test:
     image: mariadb:10.6
@@ -165,34 +205,6 @@ services:
       MEMORY_LIMIT: 512M
     links:
       - db-service-test 
-
-  queue-long-service-test:
-    <<: *frappe-defaults
-    command: [bench, worker, --queue, "long,default,short"]
-    volumes:
-      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-      - services-logs-data-test:/home/frappe/frappe-bench/logs
-
-  queue-short-service-test:
-    <<: *frappe-defaults
-    command: [bench, worker, --queue, "short,default"]
-    volumes:
-      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-      - services-logs-data-test:/home/frappe/frappe-bench/logs
-
-  scheduler-service-test:
-    <<: *frappe-defaults
-    command: [bench, schedule]
-    volumes:
-      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-      - services-logs-data-test:/home/frappe/frappe-bench/logs
-
-  websocket-service-test:
-    <<: *frappe-defaults
-    command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
-    volumes:
-      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-      - services-logs-data-test:/home/frappe/frappe-bench/logs
 
   redis-queue-service-test:
     <<: *redis-defaults
