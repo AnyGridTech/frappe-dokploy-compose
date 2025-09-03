@@ -34,7 +34,7 @@ services:
         echo "✅ Container commands executed successfully";
     volumes:
       - frappe-code-data-test:/mnt/apps
-      - ./initial-setup/populate_frappe_code.sh:/populate_frappe_code.sh
+      - ./initial-setup-service/populate_frappe_code.sh:/populate_frappe_code.sh
 
   configurator-service-test:
     <<: *frappe-image-network-defaults
