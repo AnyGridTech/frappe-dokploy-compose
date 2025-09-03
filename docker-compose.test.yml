@@ -22,7 +22,7 @@ x-redis-defaults: &redis-defaults
 
 # --- Services --- #
 services:
-  frappe-code-bootstrapper:
+  initial-setup-test:
     <<: *frappe-defaults
     deploy:
       restart_policy:
@@ -32,18 +32,23 @@ services:
     entrypoint: [bash, -lc]
     command: |
       set -e
-      echo "🔎 Checando se o bind de apps no host está populado..."
+      echo "🔎 Checking if bind is already populated..."
       if [ ! -d /mnt/apps/frappe ] || [ ! -d /mnt/apps/erpnext ]; then
-        echo "📦 Populando /mnt/apps a partir da imagem..."
+        echo "📦 Populating /mnt/apps from image..."
         cp -r /home/frappe/frappe-bench/apps/* /mnt/apps/
-        # opcional: garantir dono/perm
+        # optional: ensure ownership/permissions
         chown -R 1000:1000 /mnt/apps || true
-        echo "✅ apps/ populado."
+        echo "✅ apps/ populated."
       else
-        echo "✅ apps/ já está populado."
+        echo "✅ apps/ is already populated."
       fi
   backend-service-test:
     <<: *frappe-defaults
+    depends_on:
+      initial-setup-test:
+        condition: service_completed_successfully
+      configurator-service-test:
+        condition: service_completed_successfully
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
@@ -60,6 +65,10 @@ services:
       - dokploy-network
     depends_on:
       - websocket-service-test
+      - initial-setup-test:
+        condition: service_completed_successfully
+      - configurator-service-test:
+        condition: service_completed_successfully
     command: [nginx-entrypoint.sh]
     environment:
       SITE_NAME: erp-test.growatt.app
@@ -77,6 +86,9 @@ services:
 
   configurator-service-test:
     <<: *frappe-image-network-defaults
+    depends_on:
+      initial-setup-test:
+        condition: service_completed_successfully
     deploy:
       restart_policy:
         condition: none
@@ -103,6 +115,11 @@ services:
 
   create-site-service-test:
     <<: *frappe-image-network-defaults
+    depends_on:
+      initial-setup-test:
+        condition: service_completed_successfully
+      configurator-service-test:
+        condition: service_completed_successfully
     deploy:
       restart_policy:
         condition: none
@@ -173,6 +190,9 @@ services:
 
   phpmyadmin-service-test:
     image: phpmyadmin/phpmyadmin
+    depends_on:
+      db-service-test:
+        condition: service_healthy
     networks:
       - frappe-network-test
       - dokploy-network
@@ -183,9 +203,6 @@ services:
       UPLOAD_LIMIT: 500M
       MAX_EXECUTION_TIME: 600
       MEMORY_LIMIT: 512M
-    depends_on:
-      db-service-test:
-        condition: service_healthy
     links:
       - db-service-test 
 
