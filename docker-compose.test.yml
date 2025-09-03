@@ -44,10 +44,8 @@ services:
   backend-service-test:
     <<: *frappe-defaults
     depends_on:
-      initial-setup-test:
-        condition: service_completed_successfully
-      configurator-service-test:
-        condition: service_completed_successfully
+      - initial-setup-test
+      - configurator-service-test
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
@@ -64,10 +62,8 @@ services:
       - dokploy-network
     depends_on:
       - websocket-service-test
-      - initial-setup-test:
-        condition: service_completed_successfully
-      - configurator-service-test:
-        condition: service_completed_successfully
+      - initial-setup-test
+      - configurator-service-test
     command: [nginx-entrypoint.sh]
     environment:
       SITE_NAME: erp-test.growatt.app
@@ -86,8 +82,7 @@ services:
   configurator-service-test:
     <<: *frappe-image-network-defaults
     depends_on:
-      initial-setup-test:
-        condition: service_completed_successfully
+      - initial-setup-test
     deploy:
       restart_policy:
         condition: none
@@ -115,10 +110,8 @@ services:
   create-site-service-test:
     <<: *frappe-image-network-defaults
     depends_on:
-      initial-setup-test:
-        condition: service_completed_successfully
-      configurator-service-test:
-        condition: service_completed_successfully
+      - initial-setup-test
+      - configurator-service-test
     deploy:
       restart_policy:
         condition: none
