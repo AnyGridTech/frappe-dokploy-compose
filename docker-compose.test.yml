@@ -28,19 +28,7 @@ services:
         condition: none
     volumes:
       - frappe-code-data-test:/mnt/apps
-    entrypoint: [bash, -lc]
-    command: |
-      set -e
-      echo "🔎 Checking if bind is already populated..."
-      if [ ! -d /mnt/apps/frappe ] || [ ! -d /mnt/apps/erpnext ]; then
-        echo "📦 Populating /mnt/apps from image..."
-        cp -r /home/frappe/frappe-bench/apps/* /mnt/apps/
-        # optional: ensure ownership/permissions
-        chown -R 1000:1000 /mnt/apps || true
-        echo "✅ apps/ populated."
-      else
-        echo "✅ apps/ is already populated."
-      fi
+    entrypoint: [bash, initial_setup.sh]
   backend-service-test:
     <<: *frappe-defaults
     depends_on:
