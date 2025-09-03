@@ -28,7 +28,9 @@ services:
         condition: none
     volumes:
       - frappe-code-data-test:/mnt/apps
-    entrypoint: [bash, initial_setup.sh]
+      - ./initial_setup.sh:/initial_setup.sh
+    entrypoint: [bash, /initial_setup.sh]
+      
   backend-service-test:
     <<: *frappe-defaults
     depends_on:
