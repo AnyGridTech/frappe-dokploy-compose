@@ -1,4 +1,3 @@
-version: "3"
 # ./docker-compose.test.yml
 # --- YAML Anchors / Extensions ---
 x-frappe-image-network-defaults: &frappe-image-network-defaults
