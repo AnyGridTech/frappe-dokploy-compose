@@ -30,11 +30,11 @@ services:
     entrypoint: [bash, -c]
     command: 
       - >
-        bash /initial_setup.sh;
+        bash /populate_frappe_code.sh;
         echo "✅ Container commands executed successfully";
     volumes:
       - frappe-code-data-test:/mnt/apps
-      - ./initial_setup.sh:/initial_setup.sh
+      - ./initial-setup/populate_frappe_code.sh:/populate_frappe_code.sh
 
   configurator-service-test:
     <<: *frappe-image-network-defaults
@@ -56,7 +56,7 @@ services:
       REDIS_QUEUE: redis-queue-service-test:6379
       SOCKETIO_PORT: "9000"
     volumes:
-      - ./configurator_setup.sh:/home/frappe/frappe-bench/configurator_setup.sh
+      - ./configurator-service/configurator_setup.sh:/home/frappe/frappe-bench/configurator_setup.sh
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
@@ -80,9 +80,9 @@ services:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
-      - ./auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh
-      - ./install_apps.sh:/home/frappe/frappe-bench/install_apps.sh
-      - ./create_site_setup.sh:/home/frappe/frappe-bench/create_site_setup.sh
+      - ./create-site-service/auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh
+      - ./create-site-service/install_apps.sh:/home/frappe/frappe-bench/install_apps.sh
+      - ./create-site-service/create_site_setup.sh:/home/frappe/frappe-bench/create_site_setup.sh
     environment:
       SITE_NAME: erp-test.growatt.app
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -92,6 +92,11 @@ services:
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
+    entrypoint: [bash, -c]
+    command:
+      - >
+        bench setup requirements;
+        echo "✅ Container commands executed successfully";
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
@@ -129,7 +134,12 @@ services:
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
-    command: [bench, worker, --queue, "long,default,short"]
+    entrypoint: [bash, -c]
+    command: 
+      - > 
+        bench setup requirements;
+        bench worker --queue "long,default,short";
+        echo "✅ Container commands executed successfully";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
@@ -139,7 +149,12 @@ services:
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
-    command: [bench, worker, --queue, "short,default"]
+    entrypoint: [bash, -c]
+    command: 
+      - > 
+        bench setup requirements;
+        bench worker --queue "default,short";
+        echo "✅ Container commands executed successfully";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
@@ -149,7 +164,12 @@ services:
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
-    command: [bench, schedule]
+        entrypoint: [bash, -c]
+    command: 
+      - > 
+        bench setup requirements;
+        bench schedule;
+        echo "✅ Container commands executed successfully";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
