@@ -72,10 +72,9 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bash ./create_site_setup.sh;
-        bash ./auto_setup_wizard.sh backend-service-test || true;
-        bash ./install_apps.sh erp-test.growatt.app || true;
-        touch /tmp/finished;
+        bash ./create_site_setup.sh erp-test.growatt.app root ${MYSQL_ROOT_PASSWORD};
+        bash ./auto_setup_wizard.sh backend-service-test;
+        bash ./install_apps.sh erp-test.growatt.app;
         echo "✅ Container commands executed successfully";
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
