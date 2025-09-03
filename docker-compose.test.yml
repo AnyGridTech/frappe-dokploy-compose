@@ -80,6 +80,8 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
+        echo "Waiting 5 seconds for initial-setup to finish...";
+        sleep 5;
         ls -1 apps > sites/apps.txt;
         bench set-config -g db_host $$DB_HOST;
         bench set-config -gp db_port $$DB_PORT;
@@ -131,12 +133,7 @@ services:
           --install-app erpnext \
           --set-default erp-test.growatt.app;
         bash ./auto_setup_wizard.sh backend-service-test || true;
-        bench get-app frappe_comment_xt https://github.com/rtCamp/frappe-comment-xt.git;
-        bench --site erp-test.growatt.app install-app frappe_comment_xt;
-        bench --site erp-test.growatt.app clear-cache;
-        bench --site erp-test.growatt.app clear-website-cache;
-        bench --site erp-test.growatt.app migrate;
-        bench restart;
+        bash ./install_apps.sh erp-test.growatt.app || true;
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites

@@ -2,6 +2,8 @@
 # ./auto_setup_wizard.sh <backend-hostname>
 set -e
 
+echo "Running auto_setup_wizard.sh..."
+
 BACKEND_HOSTNAME="$1"
 
 # 2. Verifica se o argumento foi realmente passado.
@@ -62,5 +64,5 @@ echo "KWARGS (senha oculta):"
 echo "$KWARGS" | jq '.args.password = "**********"'
 
 echo "--- Submitting Setup Wizard Data ---"
-bench --site "${SITE_NAME}" execute frappe.desk.page.setup_wizard.setup_wizard.setup_complete --kwargs "${KWARGS}" || true
+bench --site "${SITE_NAME}" execute frappe.desk.page.setup_wizard.setup_wizard.setup_complete --kwargs "${KWARGS}"
 echo "--- Setup Wizard Complete ---"

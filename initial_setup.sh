@@ -1,6 +1,9 @@
 #!/bin/bash
 # ./initial_setup.sh
 set -e
+
+echo "Running initial_setup.sh..."
+
 echo "🔎 Checking if bind is already populated..."
 if [ ! -d /mnt/apps/frappe ] || [ ! -d /mnt/apps/erpnext ]; then
   echo "📦 Populating /mnt/apps from image..."
