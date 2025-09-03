@@ -31,22 +31,16 @@ services:
     command: 
       - >
         bash /initial_setup.sh;
-        touch /tmp/finished;
         echo "✅ Container commands executed successfully";
     volumes:
       - frappe-code-data-test:/mnt/apps
       - ./initial_setup.sh:/initial_setup.sh
-    healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/finished"]
-      interval: 5s
-      retries: 50
-      start_period: 10s
 
   configurator-service-test:
     <<: *frappe-image-network-defaults
     depends_on:
       initial-setup-test:
-        condition: service_healthy
+        condition: service_completed_successfully
     deploy:
       restart_policy:
         condition: none
@@ -54,7 +48,6 @@ services:
     command:
       - >
         bash ./configurator_setup.sh;
-        touch /tmp/finished;
         echo "✅ Container commands executed successfully";
     environment:
       DB_HOST: db-service-test
@@ -67,17 +60,12 @@ services:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
-    healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/finished"]
-      interval: 5s
-      retries: 50
-      start_period: 10s
 
   create-site-service-test:
     <<: *frappe-image-network-defaults
     depends_on:
       configurator-service-test:
-        condition: service_healthy
+        condition: service_completed_successfully
     deploy:
       restart_policy:
         condition: none
@@ -99,17 +87,12 @@ services:
     environment:
       SITE_NAME: erp-test.growatt.app
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/finished"]
-      interval: 5s
-      retries: 50
-      start_period: 30s
 
   backend-service-test:
     <<: *frappe-defaults
     depends_on:
       create-site-service-test:
-        condition: service_healthy
+        condition: service_completed_successfully
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
@@ -126,7 +109,7 @@ services:
       - dokploy-network
     depends_on:
       create-site-service-test:
-        condition: service_healthy
+        condition: service_completed_successfully
     command: [nginx-entrypoint.sh]
     environment:
       SITE_NAME: erp-test.growatt.app
