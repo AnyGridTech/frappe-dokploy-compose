@@ -120,6 +120,7 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
+        bench setup procfile &&
         bench setup requirements &&
         bench start;
     volumes:
@@ -188,7 +189,6 @@ services:
     entrypoint: [bash, -c]
     command: 
       - >
-        bench setup procfile &&
         bench setup requirements &&
         node /home/frappe/frappe-bench/apps/frappe/socketio.js;
     volumes:
