@@ -96,7 +96,6 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bench setup requirements;
         echo "✅ Container commands executed";
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps

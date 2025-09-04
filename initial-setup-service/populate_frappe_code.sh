@@ -6,6 +6,8 @@ echo "Running populate_frappe_code.sh..."
 
 echo "🔎 Checking if bind is already populated..."
 if [ ! -d /mnt/apps/frappe ] || [ ! -d /mnt/apps/erpnext ]; then
+  echo "Listing contents of /home/frappe/frappe-bench/apps/frappe:"
+  ls -la /home/frappe/frappe-bench/apps/frappe
   echo "📦 Populating /mnt/apps from image..."
   cp -a /home/frappe/frappe-bench/apps/. /mnt/apps/
   chown -R 1000:1000 /mnt/apps || true
