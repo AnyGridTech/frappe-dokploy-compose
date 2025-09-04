@@ -4,13 +4,6 @@ set -e
 
 echo "Running install_apps.sh..."
 
-SITE_NAME="$1"
-
-if [ -z "$SITE_NAME" ]; then
-  echo "❌ SITE_NAME is required"
-  exit 1
-fi
-
 echo "🔄 Getting app frappe_comment_xt..."
 bench get-app frappe_comment_xt https://github.com/rtCamp/frappe-comment-xt.git
 

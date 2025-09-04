@@ -4,9 +4,6 @@ set -e
 
 echo "Running auto_setup_wizard.sh..."
 
-SITE_NAME="$1"
-MYSQL_ROOT_PASSWORD="$2"
-
 Y=$(date +%Y)
 FY_START="$Y-01-01"
 FY_END="$Y-12-31"
@@ -48,7 +45,7 @@ KWARGS=$(jq -n \
 echo "KWARGS (senha oculta):"
 echo "$KWARGS" | jq '.args.password = "**********"'
 
-echo "Submitting Setup Wizard Data..."
+echo "Submitting Setup Wizard Data on site ${SITE_NAME}..."
 bench --site "${SITE_NAME}" execute frappe.desk.page.setup_wizard.setup_wizard.setup_complete --kwargs "${KWARGS}" || true
 
 echo "Finished auto_setup_wizard.sh"

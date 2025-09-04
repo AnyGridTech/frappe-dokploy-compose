@@ -30,6 +30,8 @@ done
 
 echo "sites/common_site_config.json found"
 echo "Creating new site named $SITE_NAME..."
+echo "Using MySQL root username: $MYSQL_ROOT_USERNAME"
+echo "Using MySQL root password: **********"
 
 bench new-site --mariadb-user-host-login-scope='%' \
   --admin-password=${MYSQL_ROOT_PASSWORD} \

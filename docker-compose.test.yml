@@ -73,8 +73,8 @@ services:
     command:
       - >
         bash ./create_site_setup.sh ${SITE_NAME} root ${MYSQL_ROOT_PASSWORD};
-        bash ./auto_setup_wizard.sh ${SITE_NAME} ${MYSQL_ROOT_PASSWORD};
-        bash ./install_apps.sh ${SITE_NAME};
+        bash ./auto_setup_wizard.sh;
+        bash ./install_apps.sh;
         echo "✅ Container commands executed";
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
