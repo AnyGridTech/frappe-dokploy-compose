@@ -5,11 +5,8 @@ retry() {
   local delay=$1; shift
   local cmd="$@"
   echo "Running command: $cmd"
-  echo "Maximum attempts: $attempts"
-  echo "Delay between attempts: $delay sec"
   for i in $(seq 1 $attempts); do
     if eval "$cmd"; then
-      echo "✅ Success on attempt $i for command: $cmd"
       return 0
     fi
     sleep $delay
