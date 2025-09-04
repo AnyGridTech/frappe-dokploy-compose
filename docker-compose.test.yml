@@ -143,6 +143,7 @@ services:
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
 
   queue-short-service-test:
     <<: *frappe-defaults
@@ -158,6 +159,7 @@ services:
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
 
   scheduler-service-test:
     <<: *frappe-defaults
@@ -173,16 +175,23 @@ services:
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
 
   websocket-service-test:
     <<: *frappe-defaults
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
-    command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
+    entrypoint: [bash, -c]
+    command: 
+      - > 
+        bench setup requirements;
+        node /home/frappe/frappe-bench/apps/frappe/socketio.js;
+        echo "✅ Container commands executed successfully";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
 
   db-service-test:
     image: mariadb:10.6
