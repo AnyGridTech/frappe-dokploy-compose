@@ -72,7 +72,7 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bash ./create_site_setup.sh ${SITE_NAME} root ${MYSQL_ROOT_PASSWORD};
+        bash ./create_site_setup.sh;
         bash ./auto_setup_wizard.sh;
         bash ./install_apps.sh;
         echo "✅ Container commands executed";
@@ -85,6 +85,7 @@ services:
       - ./create-site-service/create_site_setup.sh:/home/frappe/frappe-bench/create_site_setup.sh
     environment:
       SITE_NAME: erp-test.growatt.app
+      MY_SQL_ROOT_USERNAME: root
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
   backend-service-test:

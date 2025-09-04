@@ -3,10 +3,6 @@
 
 set -e
 
-SITE_NAME="$1"
-MYSQL_ROOT_USERNAME="$2"
-MYSQL_ROOT_PASSWORD="$3"
-
 echo "Running create_site_setup.sh"
 
 wait-for-it -t 120 db-service-test:3306
@@ -31,7 +27,7 @@ done
 echo "sites/common_site_config.json found"
 echo "Creating new site named $SITE_NAME..."
 echo "Using MySQL root username: $MYSQL_ROOT_USERNAME"
-echo "Using MySQL root password: **********"
+echo "Using MySQL root password: $MYSQL_ROOT_PASSWORD"
 
 bench new-site --mariadb-user-host-login-scope='%' \
   --admin-password=${MYSQL_ROOT_PASSWORD} \
