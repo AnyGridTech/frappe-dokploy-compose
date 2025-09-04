@@ -17,8 +17,11 @@ fi
 # Então iniciamos um repositório git com um primeiro commit
 # tornando o repositório 'válido' para a biblioteca GitPython.
 
-no_frappe_git=$(![ -d "/home/frappe/frappe-bench/apps/frappe/.git" ])
-no_erpnext_git=$(![ -d "/home/frappe/frappe-bench/apps/erpnext/.git" ])
+no_frappe_git="false"
+[ ! -d "/home/frappe/frappe-bench/apps/frappe/.git" ] && no_frappe_git=true
+no_erpnext_git="false"
+[ ! -d "/home/frappe/frappe-bench/apps/erpnext/.git" ] && no_erpnext_git=true
+
 if [ "$no_frappe_git" ] || [ "$no_erpnext_git" ]; then
     echo "⚠️  Detected missing .git directories in apps/frappe or apps/erpnext."
     echo "This may cause 'bench setup requirements' to fail."
