@@ -116,10 +116,10 @@ services:
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
     command:
       - >
-        cd /home/frappe/frappe-bench &&
         bench setup requirements &&
         bench start;
     volumes:
@@ -136,10 +136,10 @@ services:
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
     command: 
       - >
-        cd /home/frappe/frappe-bench &&
         bench setup requirements &&
         bench worker --queue "long,default,short";
     volumes:
@@ -152,10 +152,10 @@ services:
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
     command: 
       - >
-        cd /home/frappe/frappe-bench &&
         bench setup requirements &&
         bench worker --queue "default,short";
     volumes:
@@ -168,10 +168,10 @@ services:
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
     command: 
       - >
-        cd /home/frappe/frappe-bench &&
         bench setup requirements &&
         bench schedule;
     volumes:
@@ -184,10 +184,10 @@ services:
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
     command: 
       - >
-        cd /home/frappe/frappe-bench &&
         bench setup requirements &&
         node /home/frappe/frappe-bench/apps/frappe/socketio.js;
     volumes:
