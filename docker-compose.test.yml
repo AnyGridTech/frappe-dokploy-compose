@@ -120,9 +120,8 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bench setup procfile &&
         bench setup requirements &&
-        bench start;
+        bench start
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
