@@ -85,7 +85,7 @@ services:
       - ./create-site-service/create_site_setup.sh:/home/frappe/frappe-bench/create_site_setup.sh
     environment:
       SITE_NAME: erp-test.growatt.app
-      MY_SQL_ROOT_USERNAME: root
+      MYSQL_ROOT_USERNAME: root
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
   backend-service-test:
