@@ -4,23 +4,8 @@ set -e
 
 echo "Running auto_setup_wizard.sh..."
 
-BACKEND_HOSTNAME="$1"
-
-# 2. Verifica se o argumento foi realmente passado.
-if [ -z "$BACKEND_HOSTNAME" ]; then
-  echo "ERRO: O hostname do backend (test, dev, prod) não foi passado como argumento."
-  echo "Uso: bash ./auto_setup_wizard.sh <backend-hostname>"
-  echo "Exemplo: bash ./auto_setup_wizard.sh backend-service-test (ou -prod ou -dev)"
-  exit 1
-fi
-
-echo "--- Iniciando setup wizard para o backend: $BACKEND_HOSTNAME ---"
-
-echo "Waiting for backend ($BACKEND_HOSTNAME) to be available..."
-wait-for-it -t 120 "$BACKEND_HOSTNAME:8000"
-echo "Backend is available. Waiting 5 seconds for it to stabilize..."
-sleep 5
-echo "Running automated setup_wizard..."
+SITE_NAME="$1"
+MYSQL_ROOT_PASSWORD="$2"
 
 Y=$(date +%Y)
 FY_START="$Y-01-01"

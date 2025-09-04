@@ -31,7 +31,7 @@ services:
     command: 
       - >
         bash /populate_frappe_code.sh;
-        echo "✅ Container commands executed successfully";
+        echo "✅ Container commands executed";
     volumes:
       - frappe-code-data-test:/mnt/apps
       - ./initial-setup-service/populate_frappe_code.sh:/populate_frappe_code.sh
@@ -48,7 +48,7 @@ services:
     command:
       - >
         bash ./configurator_setup.sh;
-        echo "✅ Container commands executed successfully";
+        echo "✅ Container commands executed";
     environment:
       DB_HOST: db-service-test
       DB_PORT: "3306"
@@ -72,10 +72,10 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bash ./create_site_setup.sh erp-test.growatt.app root ${MYSQL_ROOT_PASSWORD};
-        bash ./auto_setup_wizard.sh backend-service-test;
-        bash ./install_apps.sh erp-test.growatt.app;
-        echo "✅ Container commands executed successfully";
+        bash ./create_site_setup.sh ${SITE_NAME} root ${MYSQL_ROOT_PASSWORD};
+        bash ./auto_setup_wizard.sh ${SITE_NAME} ${MYSQL_ROOT_PASSWORD};
+        bash ./install_apps.sh ${SITE_NAME};
+        echo "✅ Container commands executed";
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
@@ -96,7 +96,7 @@ services:
     command:
       - >
         bench setup requirements;
-        echo "✅ Container commands executed successfully";
+        echo "✅ Container commands executed";
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
@@ -136,10 +136,8 @@ services:
         condition: service_completed_successfully
     entrypoint: [bash, -c]
     command: 
-      - > 
-        bench setup requirements;
+      - >
         bench worker --queue "long,default,short";
-        echo "✅ Container commands executed successfully";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
@@ -152,10 +150,8 @@ services:
         condition: service_completed_successfully
     entrypoint: [bash, -c]
     command: 
-      - > 
-        bench setup requirements;
+      - >
         bench worker --queue "default,short";
-        echo "✅ Container commands executed successfully";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
@@ -168,10 +164,8 @@ services:
         condition: service_completed_successfully
     entrypoint: [bash, -c]
     command: 
-      - > 
-        bench setup requirements;
+      - >
         bench schedule;
-        echo "✅ Container commands executed successfully";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
@@ -184,10 +178,8 @@ services:
         condition: service_completed_successfully
     entrypoint: [bash, -c]
     command: 
-      - > 
-        bench setup requirements;
+      - >
         node /home/frappe/frappe-bench/apps/frappe/socketio.js;
-        echo "✅ Container commands executed successfully";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
