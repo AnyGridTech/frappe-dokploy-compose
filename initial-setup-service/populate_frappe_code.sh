@@ -18,6 +18,8 @@ fi
 # para tornar o repositório 'válido' para a biblioteca GitPython.
 
 if [ ! -d "/home/frappe/frappe-bench/apps/frappe/.git" ]; then
+    echo "Configuring Git safe directory..."
+    git config --global --add safe.directory /home/frappe/frappe-bench/apps/frappe
     echo "Initializing dummy Git repo in apps/frappe..."
     cd /home/frappe/frappe-bench/apps/frappe
     git init -b main > /dev/null
@@ -27,6 +29,8 @@ if [ ! -d "/home/frappe/frappe-bench/apps/frappe/.git" ]; then
 fi
 
 if [ ! -d "/home/frappe/frappe-bench/apps/erpnext/.git" ]; then
+    echo "Configuring Git safe directory..."
+    git config --global --add safe.directory /home/frappe/frappe-bench/apps/erpnext
     echo "Initializing dummy Git repo in apps/erpnext..."
     cd /home/frappe/frappe-bench/apps/erpnext
     git init -b main > /dev/null
