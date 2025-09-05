@@ -57,8 +57,9 @@ services:
       SOCKETIO_PORT: "9000"
     volumes:
       - ./configurator-service/configurator_setup.sh:/home/frappe/frappe-bench/configurator_setup.sh
-      - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
       - services-logs-data-test:/home/frappe/frappe-bench/logs
 
   create-site-service-test:
@@ -77,8 +78,9 @@ services:
         bash ./install_apps.sh;
         echo "✅ Container commands executed";
     volumes:
-      - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
       - services-logs-data-test:/home/frappe/frappe-bench/logs
       - ./create-site-service/auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh
       - ./create-site-service/install_apps.sh:/home/frappe/frappe-bench/install_apps.sh
@@ -113,6 +115,7 @@ services:
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
       - services-logs-data-test:/home/frappe/frappe-bench/logs
       - ./frontend-service/start_frontend.sh:/home/frappe/frappe-bench/start_frontend.sh
 
@@ -128,8 +131,9 @@ services:
         bash ./start_backend.sh;
     volumes:
       - ./backend-service/start_backend.sh:/home/frappe/frappe-bench/start_backend.sh
-      - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
       - services-logs-data-test:/home/frappe/frappe-bench/logs
     environment:
       DB_HOST: db-service-test
@@ -149,8 +153,9 @@ services:
         bench worker --queue "long,default,short";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-      - services-logs-data-test:/home/frappe/frappe-bench/logs
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
 
   queue-short-service-test:
     <<: *frappe-defaults
@@ -165,8 +170,9 @@ services:
         bench worker --queue "default,short";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-      - services-logs-data-test:/home/frappe/frappe-bench/logs
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
 
   scheduler-service-test:
     <<: *frappe-defaults
@@ -181,8 +187,9 @@ services:
         bench schedule;
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-      - services-logs-data-test:/home/frappe/frappe-bench/logs
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
 
   websocket-service-test:
     <<: *frappe-defaults
@@ -272,6 +279,13 @@ volumes:
     driver_opts:
       type: none
       device: /home/frappe-test/frappe-bench/sites
+      o: bind
+  
+  frappe-env-data-test:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-test/frappe-bench/env
       o: bind
 
   frappe-db-data-test:

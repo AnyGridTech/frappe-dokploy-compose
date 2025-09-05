@@ -13,6 +13,9 @@ bench setup requirements
 echo "✅ Installing app frappe_comment_xt on site $SITE_NAME..."
 bench --site "$SITE_NAME" install-app frappe_comment_xt
 
+echo "✅ Building app frappe_comment_xt..."
+bench build --app frappe_comment_xt
+
 echo "🔄 Clearing cache..."
 bench --site "$SITE_NAME" clear-cache
 bench --site "$SITE_NAME" clear-website-cache
