@@ -4,6 +4,12 @@
 set -e
 
 echo "Running create_site_setup.sh"
+trap 'echo "Finished create_site_setup.sh"' EXIT
+
+if bench --site "$SITE_NAME" list-apps >/dev/null 2>&1; then
+  echo "✅ Site $SITE_NAME já existe, saindo da execução..."
+  exit 0
+fi
 
 wait-for-it -t 120 db-service-test:3306
 wait-for-it -t 120 redis-cache-service-test:6379
@@ -34,5 +40,3 @@ bench new-site --mariadb-user-host-login-scope='%' \
   --db-root-username=root --db-root-password=${MYSQL_ROOT_PASSWORD} \
   --install-app erpnext \
   --set-default ${SITE_NAME}
-
-echo "Finished create_site_setup.sh"

@@ -23,7 +23,7 @@ no_erpnext_git="false"
 [ ! -d "/home/frappe/frappe-bench/apps/erpnext/.git" ] && no_erpnext_git=true
 
 if [ "$no_frappe_git" ] || [ "$no_erpnext_git" ]; then
-    echo "⚠️  Detected missing .git directories in apps/frappe or apps/erpnext."
+    echo "⚠️ Detected missing .git directories in apps/frappe or apps/erpnext."
     echo "This may cause 'bench setup requirements' to fail."
     echo "Applying workaround to initialize dummy git repositories..."
     echo "This git repositories are not supposed to be used or commited to."
@@ -36,7 +36,7 @@ if [ "$no_frappe_git" ] || [ "$no_erpnext_git" ]; then
 fi
 
 if [ "$no_frappe_git" ]; then
-    echo "Initializing dummy Git repo in apps/frappe..."
+    echo "🔄 Initializing dummy Git repo in apps/frappe..."
     cd /home/frappe/frappe-bench/apps/frappe
     git init -b main > /dev/null
     git commit --allow-empty -m "Initial commit for compatibility" > /dev/null
@@ -44,18 +44,13 @@ if [ "$no_frappe_git" ]; then
 fi
 
 if [ "$no_erpnext_git" ]; then
-    echo "Initializing dummy Git repo in apps/erpnext..."
+    echo "🔄 Initializing dummy Git repo in apps/erpnext..."
     cd /home/frappe/frappe-bench/apps/erpnext
     git init -b main > /dev/null
     git commit --allow-empty -m "Initial commit for compatibility" > /dev/null
     cd /home/frappe/frappe-bench
 fi
 # --- BENCH SETUP REQUIREMENTS WORKAROUND END ---
-
-echo "🔎 Inspecting frappe folder"
-ls -la /home/frappe/frappe-bench/apps/frappe
-echo "🔎 Inspecting erpnext folder"
-ls -la /home/frappe/frappe-bench/apps/erpnext
 
 echo "📦 Populating /mnt/apps from image folders..."
 cp -a /home/frappe/frappe-bench/apps/. /mnt/apps/

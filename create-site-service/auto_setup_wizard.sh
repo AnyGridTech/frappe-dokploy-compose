@@ -3,6 +3,12 @@
 set -e
 
 echo "Running auto_setup_wizard.sh..."
+trap 'echo "Finished auto_setup_wizard.sh"' EXIT
+
+if bench --site "$SITE_NAME" list-apps >/dev/null 2>&1; then
+  echo "✅ Site $SITE_NAME já existe, saindo da execução..."
+  exit 0
+fi
 
 Y=$(date +%Y)
 FY_START="$Y-01-01"
