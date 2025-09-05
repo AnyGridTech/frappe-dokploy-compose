@@ -116,6 +116,12 @@ services:
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        bash ./start_backend.sh;
+        echo "✅ Container commands executed";
     volumes:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
