@@ -149,7 +149,6 @@ services:
     entrypoint: [bash, -c]
     command: 
       - >
-        bench setup requirements &&
         bench worker --queue "long,default,short";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
@@ -166,7 +165,6 @@ services:
     entrypoint: [bash, -c]
     command: 
       - >
-        bench setup requirements &&
         bench worker --queue "default,short";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
@@ -183,7 +181,6 @@ services:
     entrypoint: [bash, -c]
     command: 
       - >
-        bench setup requirements &&
         bench schedule;
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
@@ -200,7 +197,6 @@ services:
     entrypoint: [bash, -c]
     command: 
       - >
-        bench setup requirements &&
         node /home/frappe/frappe-bench/apps/frappe/socketio.js;
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
