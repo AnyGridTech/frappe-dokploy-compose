@@ -123,6 +123,7 @@ services:
         bash ./start_backend.sh;
         echo "✅ Container commands executed";
     volumes:
+      - ./backend-service/start_backend.sh:/home/frappe/frappe-bench/start_backend.sh
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
