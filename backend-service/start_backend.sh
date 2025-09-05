@@ -31,5 +31,3 @@ echo "⚙️  Configuring gunicorn with $WORKERS workers and $THREADS threads pe
   --timeout=120 \
   --preload \
   frappe.app:application
-
-echo "Finished start_backend.sh"

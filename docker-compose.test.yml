@@ -96,7 +96,10 @@ services:
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
-    command: [nginx-entrypoint.sh]
+    entrypoint: [bash, -c]
+    command:
+      - >
+        bash ./frontend-service/start_frontend.sh;
     environment:
       SITE_NAME: erp-test.growatt.app
       BACKEND: backend-service-test:8000
@@ -110,6 +113,7 @@ services:
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - services-logs-data-test:/home/frappe/frappe-bench/logs
+      - ./frontend-service/start_frontend.sh:/home/frappe/frappe-bench/start_frontend.sh
 
   backend-service-test:
     <<: *frappe-defaults
@@ -121,7 +125,6 @@ services:
     command: 
       - >
         bash ./start_backend.sh;
-        echo "✅ Container commands executed";
     volumes:
       - ./backend-service/start_backend.sh:/home/frappe/frappe-bench/start_backend.sh
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
