@@ -99,7 +99,7 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bash ./frontend-service/start_frontend.sh;
+        bash ./start_frontend.sh;
     environment:
       SITE_NAME: erp-test.growatt.app
       BACKEND: backend-service-test:8000
