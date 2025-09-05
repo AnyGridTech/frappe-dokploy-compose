@@ -112,6 +112,7 @@ services:
       CLIENT_MAX_BODY_SIZE: 50m
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - services-logs-data-test:/home/frappe/frappe-bench/logs
       - ./frontend-service/start_frontend.sh:/home/frappe/frappe-bench/start_frontend.sh
 
