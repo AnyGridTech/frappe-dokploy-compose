@@ -88,7 +88,7 @@ services:
     environment:
       SITE_NAME: erp-test.growatt.app
       MYSQL_ROOT_USERNAME: root
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-$${$${project.MYSQL_ROOT_PASSWORD}}}
+      MYSQL_ROOT_PASSWORD: $${project.MYSQL_ROOT_PASSWORD}
 
   frontend-service-test:
     <<: *frappe-defaults
@@ -138,7 +138,7 @@ services:
     environment:
       DB_HOST: db-service-test
       DB_PORT: "3306"
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-$${$${project.MYSQL_ROOT_PASSWORD}}}
+      MYSQL_ROOT_PASSWORD: $${project.MYSQL_ROOT_PASSWORD}
     
   queue-long-service-test:
     <<: *frappe-defaults
@@ -223,7 +223,7 @@ services:
       - --skip-innodb-read-only-compressed
       - --max_allowed_packet=64M
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-$${$${project.MYSQL_ROOT_PASSWORD}}}
+      MYSQL_ROOT_PASSWORD: $${project.MYSQL_ROOT_PASSWORD}
     volumes:
       - frappe-db-data-test:/var/lib/mysql
 
@@ -238,7 +238,7 @@ services:
     environment:
       PMA_HOST: db-service-test
       PMA_PORT: 3306
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-$${$${project.MYSQL_ROOT_PASSWORD}}}
+      MYSQL_ROOT_PASSWORD: $${project.MYSQL_ROOT_PASSWORD}
       UPLOAD_LIMIT: 500M
       MAX_EXECUTION_TIME: 600
       MEMORY_LIMIT: 512M
