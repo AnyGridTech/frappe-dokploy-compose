@@ -211,7 +211,7 @@ services:
       restart_policy:
         condition: on-failure
     healthcheck:
-      test: mysqladmin ping -h localhost --password=$${project.MYSQL_ROOT_PASSWORD}
+      test: mysqladmin ping -h localhost --password=${project.MYSQL_ROOT_PASSWORD}
       interval: 60s
       timeout: 5s
       retries: 5
