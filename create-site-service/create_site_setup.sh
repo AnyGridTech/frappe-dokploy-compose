@@ -6,6 +6,8 @@ set -e
 echo "Running create_site_setup.sh"
 trap 'echo "Finished create_site_setup.sh"' EXIT
 
+echo "Using MySQL root password: ${MYSQL_ROOT_PASSWORD:0:3}********"
+
 if bench --site "$SITE_NAME" list-apps >/dev/null 2>&1; then
   echo "✅ Site $SITE_NAME já existe, saindo da execução..."
   exit 0
