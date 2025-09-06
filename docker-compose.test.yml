@@ -88,7 +88,7 @@ services:
     environment:
       SITE_NAME: erp-test.growatt.app
       MYSQL_ROOT_USERNAME: root
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-${$${project.MYSQL_ROOT_PASSWORD}}}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-$${$${project.MYSQL_ROOT_PASSWORD}}}
 
   frontend-service-test:
     <<: *frappe-defaults
