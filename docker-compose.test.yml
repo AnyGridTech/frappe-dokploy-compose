@@ -138,7 +138,7 @@ services:
     environment:
       DB_HOST: db-service-test
       DB_PORT: "3306"
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-$${{project.MYSQL_ROOT_PASSWORD}}}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-$$${{project.MYSQL_ROOT_PASSWORD}}}
     
   queue-long-service-test:
     <<: *frappe-defaults
