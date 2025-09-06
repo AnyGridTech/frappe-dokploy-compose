@@ -5,11 +5,6 @@ set -e
 echo "Running auto_setup_wizard.sh..."
 trap 'echo "Finished auto_setup_wizard.sh"' EXIT
 
-if bench --site "$SITE_NAME" execute frappe.desk.page.setup_wizard.setup_wizard.load_messages >/dev/null 2>&1; then
-  echo "✅ Setup Wizard já foi rodado no site $SITE_NAME, saindo da execução..."
-  exit 0
-fi
-
 Y=$(date +%Y)
 FY_START="$Y-01-01"
 FY_END="$Y-12-31"
