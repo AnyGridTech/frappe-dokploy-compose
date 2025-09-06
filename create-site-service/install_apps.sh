@@ -12,7 +12,7 @@ install_app() {
   local app_name=$1
   local repo_url=$2
 
-  if [ -d "$APPS_DIR/$app_name" ]; then
+  if [ ! -d "$APPS_DIR/$app_name" ]; then
     echo "🔄 Getting app $app_name..."
     bench get-app "$app_name" "$repo_url"
   else
