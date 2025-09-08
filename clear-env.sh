@@ -5,12 +5,6 @@ set -euo pipefail
 read -rp "Digite o ambiente (test/dev/prod): " ENV
 ENV="$(printf '%s' "$ENV" | tr '[:upper:]' '[:lower:]')"
 
-# Validação
-if [[ "$ENV" != "test" && "$ENV" != "dev" && "$ENV" != "prod" ]]; then
-  echo "❌ Valor inválido! Digite apenas 'test', 'dev' ou 'prod'."
-  exit 1
-fi
-
 # Execução remota (passa ENV como variável para o shell remoto)
 ssh -o StrictHostKeyChecking=no root@213.199.60.213 ENV="$ENV" '
   set -euo pipefail

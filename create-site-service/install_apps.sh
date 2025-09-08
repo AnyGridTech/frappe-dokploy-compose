@@ -30,7 +30,7 @@ install_app() {
   bench build --app "$app_name"
 }
 
-install_app frappe_comment_xt https://github.com/rtCamp/frappe-comment-xt.git
+install_app frappe-comment-agt https://github.com/AnyGridTech/frappe-comment-agt.git
 
 echo "🔧 Setting up Python and Node requirements..."
 bench setup requirements
