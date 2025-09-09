@@ -1,11 +1,9 @@
-# ./code.windows.yml
-# docker compose -p erpnext -f ./code.windows.yml up -d --build --remove-orphans
-# docker-compose -p erpnext -f ./code.windows.yml up -d --force-recreate
+# ./docker-compose.test.yml
 # --- YAML Anchors / Extensions ---
 x-frappe-image-network-defaults: &frappe-image-network-defaults
   image: frappe/erpnext:v15
   networks:
-    - frappe-network-code
+    - frappe-network-test
 
 x-frappe-service-defaults: &frappe-defaults
   <<: *frappe-image-network-defaults
@@ -16,32 +14,17 @@ x-frappe-service-defaults: &frappe-defaults
 x-redis-defaults: &redis-defaults
   image: redis:6.2-alpine
   networks:
-    - frappe-network-code
+    - frappe-network-test
   deploy:
     restart_policy:
       condition: on-failure
 
 # --- Services --- #
 services:
-  initial-setup-code:
-    <<: *frappe-defaults
-    user: "0:0"
-    deploy:
-      restart_policy:
-        condition: none
-    entrypoint: [bash, -c]
-    command: 
-      - >
-        bash /populate_frappe_code.sh;
-        echo "✅ Container commands executed";
-    volumes:
-      - frappe-code-data-code:/mnt/apps
-      - ./initial-setup-service/populate_frappe_code.sh:/populate_frappe_code.sh
-
-  configurator-service-code:
+  configurator-service-test:
     <<: *frappe-image-network-defaults
     depends_on:
-      initial-setup-code:
+      initial-setup-test:
         condition: service_completed_successfully
     deploy:
       restart_policy:
@@ -52,22 +35,23 @@ services:
         bash ./configurator_setup.sh;
         echo "✅ Container commands executed";
     environment:
-      DB_HOST: db-service-code
+      ENV: -test
+      DB_HOST: db-service-test
       DB_PORT: "3306"
-      REDIS_CACHE: redis-cache-service-code:6379
-      REDIS_QUEUE: redis-queue-service-code:6379
+      REDIS_CACHE: redis-cache-service-test:6379
+      REDIS_QUEUE: redis-queue-service-test:6379
       SOCKETIO_PORT: "9000"
     volumes:
       - ./configurator-service/configurator_setup.sh:/home/frappe/frappe-bench/configurator_setup.sh
-      - frappe-sites-data-code:/home/frappe/frappe-bench/sites
-      - frappe-code-data-code:/home/frappe/frappe-bench/apps
-      - frappe-env-data-code:/home/frappe/frappe-bench/env
-      - services-logs-data-code:/home/frappe/frappe-bench/logs
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
 
-  create-site-service-code:
+  create-site-service-test:
     <<: *frappe-image-network-defaults
     depends_on:
-      configurator-service-code:
+      configurator-service-test:
         condition: service_completed_successfully
     deploy:
       restart_policy:
@@ -80,51 +64,52 @@ services:
         bash ./install_apps.sh;
         echo "✅ Container commands executed";
     volumes:
-      - frappe-sites-data-code:/home/frappe/frappe-bench/sites
-      - frappe-code-data-code:/home/frappe/frappe-bench/apps
-      - frappe-env-data-code:/home/frappe/frappe-bench/env
-      - services-logs-data-code:/home/frappe/frappe-bench/logs
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
       - ./create-site-service/auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh
       - ./create-site-service/install_apps.sh:/home/frappe/frappe-bench/install_apps.sh
       - ./create-site-service/create_site_setup.sh:/home/frappe/frappe-bench/create_site_setup.sh
     environment:
-      ENV: -code
-      SITE_NAME: erp-code.growatt.app
+      ENV: -test
+      SITE_NAME: erp-test.growatt.app
       MYSQL_ROOT_USERNAME: root
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
-  frontend-service-code:
+  frontend-service-test:
     <<: *frappe-defaults
     networks:
-      - frappe-network-code
+      - frappe-network-test
+      - dokploy-network
     depends_on:
-      create-site-service-code:
+      create-site-service-test:
         condition: service_completed_successfully
     entrypoint: [bash, -c]
     command:
       - >
         bash ./start_frontend.sh;
     environment:
-      SITE_NAME: erp-code.growatt.app
-      BACKEND: backend-service-code:8000
-      FRAPPE_SITE_NAME_HEADER: erp-code.growatt.app
-      SOCKETIO: websocket-service-code:9000
+      SITE_NAME: erp-test.growatt.app
+      BACKEND: backend-service-test:8000
+      FRAPPE_SITE_NAME_HEADER: erp-test.growatt.app
+      SOCKETIO: websocket-service-test:9000
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
       UPSTREAM_REAL_IP_RECURSIVE: "off"
       PROXY_READ_TIMEOUT: 120
       CLIENT_MAX_BODY_SIZE: 50m
     volumes:
-      - frappe-sites-data-code:/home/frappe/frappe-bench/sites
-      - frappe-code-data-code:/home/frappe/frappe-bench/apps
-      - frappe-env-data-code:/home/frappe/frappe-bench/env
-      - services-logs-data-code:/home/frappe/frappe-bench/logs
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
       - ./frontend-service/start_frontend.sh:/home/frappe/frappe-bench/start_frontend.sh
 
-  backend-service-code:
+  backend-service-test:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-code:
+      create-site-service-test:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -133,19 +118,19 @@ services:
         bash ./start_backend.sh;
     volumes:
       - ./backend-service/start_backend.sh:/home/frappe/frappe-bench/start_backend.sh
-      - frappe-sites-data-code:/home/frappe/frappe-bench/sites
-      - frappe-code-data-code:/home/frappe/frappe-bench/apps
-      - frappe-env-data-code:/home/frappe/frappe-bench/env
-      - services-logs-data-code:/home/frappe/frappe-bench/logs
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
     environment:
-      DB_HOST: db-service-code
+      DB_HOST: db-service-test
       DB_PORT: "3306"
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     
-  queue-long-service-code:
+  queue-long-service-test:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-code:
+      create-site-service-test:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -153,15 +138,15 @@ services:
       - >
         bench worker --queue "long,default,short";
     volumes:
-      - frappe-sites-data-code:/home/frappe/frappe-bench/sites
-      - frappe-code-data-code:/home/frappe/frappe-bench/apps
-      - frappe-env-data-code:/home/frappe/frappe-bench/env
-      - services-logs-data-code:/home/frappe/frappe-bench/logs
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
 
-  queue-short-service-code:
+  queue-short-service-test:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-code:
+      create-site-service-test:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -169,15 +154,15 @@ services:
       - >
         bench worker --queue "default,short";
     volumes:
-      - frappe-sites-data-code:/home/frappe/frappe-bench/sites
-      - frappe-code-data-code:/home/frappe/frappe-bench/apps
-      - frappe-env-data-code:/home/frappe/frappe-bench/env
-      - services-logs-data-code:/home/frappe/frappe-bench/logs
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
 
-  scheduler-service-code:
+  scheduler-service-test:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-code:
+      create-site-service-test:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -185,15 +170,15 @@ services:
       - >
         bench schedule;
     volumes:
-      - frappe-sites-data-code:/home/frappe/frappe-bench/sites
-      - frappe-code-data-code:/home/frappe/frappe-bench/apps
-      - frappe-env-data-code:/home/frappe/frappe-bench/env
-      - services-logs-data-code:/home/frappe/frappe-bench/logs
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
 
-  websocket-service-code:
+  websocket-service-test:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-code:
+      create-site-service-test:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -201,14 +186,14 @@ services:
       - >
         node /home/frappe/frappe-bench/apps/frappe/socketio.js;
     volumes:
-      - frappe-sites-data-code:/home/frappe/frappe-bench/sites
-      - services-logs-data-code:/home/frappe/frappe-bench/logs
-      - frappe-code-data-code:/home/frappe/frappe-bench/apps
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
 
-  db-service-code:
+  db-service-test:
     image: mariadb:10.6
     networks:
-      - frappe-network-code
+      - frappe-network-test
     deploy:
       restart_policy:
         condition: on-failure
@@ -227,57 +212,66 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
-      - frappe-db-data-code:/var/lib/mysql
+      - frappe-db-data-test:/var/lib/mysql
 
-  phpmyadmin-service-code:
+  phpmyadmin-service-test:
     image: phpmyadmin/phpmyadmin
     depends_on:
-      db-service-code:
+      db-service-test:
         condition: service_healthy
     networks:
-      - frappe-network-code
+      - frappe-network-test
+      - dokploy-network
     environment:
-      PMA_HOST: db-service-code
+      PMA_HOST: db-service-test
       PMA_PORT: 3306
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       UPLOAD_LIMIT: 500M
       MAX_EXECUTION_TIME: 600
       MEMORY_LIMIT: 512M
     links:
-      - db-service-code 
+      - db-service-test 
 
-  redis-queue-service-code:
+  redis-queue-service-test:
     <<: *redis-defaults
     volumes:
-      - frappe-redis-queue-data-code:/data
+      - frappe-redis-queue-data-test:/data
 
-  redis-cache-service-code:
+  redis-cache-service-test:
     <<: *redis-defaults
     volumes:
-      - frappe-redis-cache-data-code:/data
+      - frappe-redis-cache-data-test:/data
 
 volumes:
-  frappe-code-data-code:
-  frappe-sites-data-code:
-  frappe-env-data-code:
-  services-logs-data-code:
-  frappe-db-data-code:
-  frappe-redis-queue-data-code:
-  frappe-redis-cache-data-code:
+  services-logs-data-test:
+
+  frappe-code-data-test:
+
+  frappe-sites-data-test:
+  
+  frappe-env-data-test:
+
+  frappe-db-data-test:
+
+  frappe-redis-queue-data-test:
+
+  frappe-redis-cache-data-test:
 
 networks:
-  frappe-network-code:
+  frappe-network-test:
     driver: bridge
+  dokploy-network:
+    external: true
 
 # --- End of Services --- #
 
 # Em caso de erro relacionado a pastas dos volumes 
 # não existirem, crie as pastas com o comando abaixo:
 # sudo mkdir -p \
-#   /home/frappe-code/frappe-bench/logs \
-#   /home/frappe-code/frappe-bench/apps \
-#   /home/frappe-code/frappe-bench/sites \
-#   /home/frappe-code/frappe-bench/env \
-#   /home/frappe-code/maria-db/data \
-#   /home/frappe-code/redis-cache/data \
-#   /home/frappe-code/redis-queue/data  
+#   /home/frappe-test/frappe-bench/logs \
+#   /home/frappe-test/frappe-bench/apps \
+#   /home/frappe-test/frappe-bench/sites \
+#   /home/frappe-test/frappe-bench/env \
+#   /home/frappe-test/maria-db/data \
+#   /home/frappe-test/redis-cache/data \
+#   /home/frappe-test/redis-queue/data  

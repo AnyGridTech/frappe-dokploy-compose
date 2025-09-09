@@ -50,6 +50,7 @@ services:
         bash ./configurator_setup.sh;
         echo "✅ Container commands executed";
     environment:
+      ENV: -test
       DB_HOST: db-service-test
       DB_PORT: "3306"
       REDIS_CACHE: redis-cache-service-test:6379
@@ -86,6 +87,7 @@ services:
       - ./create-site-service/install_apps.sh:/home/frappe/frappe-bench/install_apps.sh
       - ./create-site-service/create_site_setup.sh:/home/frappe/frappe-bench/create_site_setup.sh
     environment:
+      ENV: -test
       SITE_NAME: erp-test.growatt.app
       MYSQL_ROOT_USERNAME: root
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
