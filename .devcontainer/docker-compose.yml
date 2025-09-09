@@ -1,9 +1,9 @@
-# ./docker-compose.test.yml
+# ../docker-compose.yml
 # --- YAML Anchors / Extensions ---
 x-frappe-image-network-defaults: &frappe-image-network-defaults
   image: frappe/erpnext:v15
   networks:
-    - frappe-network-codewin
+    - frappe-network-codecontainer
 
 x-frappe-service-defaults: &frappe-defaults
   <<: *frappe-image-network-defaults
@@ -14,14 +14,14 @@ x-frappe-service-defaults: &frappe-defaults
 x-redis-defaults: &redis-defaults
   image: redis:6.2-alpine
   networks:
-    - frappe-network-codewin
+    - frappe-network-codecontainer
   deploy:
     restart_policy:
       condition: on-failure
 
 # --- Services --- #
 services:
-  configurator-service-codewin:
+  configurator-service-codecontainer:
     <<: *frappe-image-network-defaults
     deploy:
       restart_policy:
@@ -29,26 +29,26 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bash ./configurator_setup.sh;
+        bash ../configurator_setup.sh;
         echo "✅ Container commands executed";
     environment:
-      ENV: -codewin
-      DB_HOST: db-service-codewin
+      ENV: -codecontainer
+      DB_HOST: db-service-codecontainer
       DB_PORT: "3306"
-      REDIS_CACHE: redis-cache-service-codewin:6379
-      REDIS_QUEUE: redis-queue-service-codewin:6379
+      REDIS_CACHE: redis-cache-service-codecontainer:6379
+      REDIS_QUEUE: redis-queue-service-codecontainer:6379
       SOCKETIO_PORT: "9000"
     volumes:
-      - ./configurator-service/configurator_setup.sh:/home/frappe/frappe-bench/configurator_setup.sh
-      - frappe-sites-data-codewin:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codewin:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codewin:/home/frappe/frappe-bench/env
-      - services-logs-data-codewin:/home/frappe/frappe-bench/logs
+      - .../configurator-service/configurator_setup.sh:/home/frappe/frappe-bench/configurator_setup.sh
+      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
+      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
+      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
+      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
 
-  create-site-service-codewin:
+  create-site-service-codecontainer:
     <<: *frappe-image-network-defaults
     depends_on:
-      configurator-service-codewin:
+      configurator-service-codecontainer:
         condition: service_completed_successfully
     deploy:
       restart_policy:
@@ -56,77 +56,89 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bash ./create_site_setup.sh;
-        bash ./auto_setup_wizard.sh;
-        bash ./install_apps.sh;
+        bash ../create_site_setup.sh;
+        bash ../auto_setup_wizard.sh;
+        bash ../install_apps.sh;
         echo "✅ Container commands executed";
     volumes:
-      - frappe-sites-data-codewin:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codewin:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codewin:/home/frappe/frappe-bench/env
-      - services-logs-data-codewin:/home/frappe/frappe-bench/logs
-      - ./create-site-service/auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh
-      - ./create-site-service/install_apps.sh:/home/frappe/frappe-bench/install_apps.sh
-      - ./create-site-service/create_site_setup.sh:/home/frappe/frappe-bench/create_site_setup.sh
+      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
+      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
+      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
+      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
+      - ../create-site-service/auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh
+      - ../create-site-service/install_apps.sh:/home/frappe/frappe-bench/install_apps.sh
+      - ../create-site-service/create_site_setup.sh:/home/frappe/frappe-bench/create_site_setup.sh
     environment:
-      ENV: -codewin
-      SITE_NAME: erp-codewin.growatt.app
+      ENV: -codecontainer
+      SITE_NAME: erp-codecontainer.growatt.app
       MYSQL_ROOT_USERNAME: root
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
-  frontend-service-codewin:
+  frontend-service-codecontainer:
     <<: *frappe-defaults
     networks:
-      - frappe-network-codewin
+      - frappe-network-codecontainer
     depends_on:
-      create-site-service-codewin:
+      create-site-service-codecontainer:
         condition: service_completed_successfully
     entrypoint: [bash, -c]
     command:
       - >
-        bash ./start_frontend.sh;
+        bash ../start_frontend.sh;
     environment:
-      SITE_NAME: erp-codewin.growatt.app
-      BACKEND: backend-service-codewin:8000
-      FRAPPE_SITE_NAME_HEADER: erp-codewin.growatt.app
-      SOCKETIO: websocket-service-codewin:9000
+      SITE_NAME: erp-codecontainer.growatt.app
+      BACKEND: backend-service-codecontainer:8000
+      FRAPPE_SITE_NAME_HEADER: erp-codecontainer.growatt.app
+      SOCKETIO: websocket-service-codecontainer:9000
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
       UPSTREAM_REAL_IP_RECURSIVE: "off"
       PROXY_READ_TIMEOUT: 120
       CLIENT_MAX_BODY_SIZE: 50m
     volumes:
-      - frappe-sites-data-codewin:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codewin:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codewin:/home/frappe/frappe-bench/env
-      - services-logs-data-codewin:/home/frappe/frappe-bench/logs
-      - ./frontend-service/start_frontend.sh:/home/frappe/frappe-bench/start_frontend.sh
+      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
+      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
+      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
+      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
+      - ../frontend-service/start_frontend.sh:/home/frappe/frappe-bench/start_frontend.sh
 
-  backend-service-codewin:
+  workspace-service-codecontainer:
+    <<: *frappe-defaults
+    networks:
+      - frappe-network-codecontainer
+    depends_on:
+      create-site-service-codecontainer:
+        condition: service_completed_successfully
+    working_dir: /workspace/development
+    command: ["sleep", "infinity"]
+    volumes:
+      - ../development:/workspace/development
+
+  backend-service-codecontainer:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-codewin:
+      create-site-service-codecontainer:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
     command: 
       - >
-        bash ./start_backend.sh;
+        bash ../start_backend.sh;
     volumes:
-      - ./backend-service/start_backend.sh:/home/frappe/frappe-bench/start_backend.sh
-      - frappe-sites-data-codewin:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codewin:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codewin:/home/frappe/frappe-bench/env
-      - services-logs-data-codewin:/home/frappe/frappe-bench/logs
+      - ../backend-service/start_backend.sh:/home/frappe/frappe-bench/start_backend.sh
+      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
+      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
+      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
+      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
     environment:
-      DB_HOST: db-service-codewin
+      DB_HOST: db-service-codecontainer
       DB_PORT: "3306"
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     
-  queue-long-service-codewin:
+  queue-long-service-codecontainer:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-codewin:
+      create-site-service-codecontainer:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -134,15 +146,15 @@ services:
       - >
         bench worker --queue "long,default,short";
     volumes:
-      - frappe-sites-data-codewin:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codewin:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codewin:/home/frappe/frappe-bench/env
-      - services-logs-data-codewin:/home/frappe/frappe-bench/logs
+      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
+      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
+      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
+      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
 
-  queue-short-service-codewin:
+  queue-short-service-codecontainer:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-codewin:
+      create-site-service-codecontainer:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -150,15 +162,15 @@ services:
       - >
         bench worker --queue "default,short";
     volumes:
-      - frappe-sites-data-codewin:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codewin:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codewin:/home/frappe/frappe-bench/env
-      - services-logs-data-codewin:/home/frappe/frappe-bench/logs
+      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
+      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
+      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
+      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
 
-  scheduler-service-codewin:
+  scheduler-service-codecontainer:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-codewin:
+      create-site-service-codecontainer:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -166,15 +178,15 @@ services:
       - >
         bench schedule;
     volumes:
-      - frappe-sites-data-codewin:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codewin:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codewin:/home/frappe/frappe-bench/env
-      - services-logs-data-codewin:/home/frappe/frappe-bench/logs
+      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
+      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
+      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
+      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
 
-  websocket-service-codewin:
+  websocket-service-codecontainer:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-codewin:
+      create-site-service-codecontainer:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -182,14 +194,14 @@ services:
       - >
         node /home/frappe/frappe-bench/apps/frappe/socketio.js;
     volumes:
-      - frappe-sites-data-codewin:/home/frappe/frappe-bench/sites
-      - services-logs-data-codewin:/home/frappe/frappe-bench/logs
-      - frappe-code-data-codewin:/home/frappe/frappe-bench/apps
+      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
+      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
+      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
 
-  db-service-codewin:
+  db-service-codecontainer:
     image: mariadb:10.6
     networks:
-      - frappe-network-codewin
+      - frappe-network-codecontainer
     deploy:
       restart_policy:
         condition: on-failure
@@ -208,44 +220,44 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
-      - frappe-db-data-codewin:/var/lib/mysql
+      - frappe-db-data-codecontainer:/var/lib/mysql
 
-  phpmyadmin-service-codewin:
+  phpmyadmin-service-codecontainer:
     image: phpmyadmin/phpmyadmin
     depends_on:
-      db-service-codewin:
+      db-service-codecontainer:
         condition: service_healthy
     networks:
-      - frappe-network-codewin
+      - frappe-network-codecontainer
     environment:
-      PMA_HOST: db-service-codewin
+      PMA_HOST: db-service-codecontainer
       PMA_PORT: 3306
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       UPLOAD_LIMIT: 500M
       MAX_EXECUTION_TIME: 600
       MEMORY_LIMIT: 512M
     links:
-      - db-service-codewin 
+      - db-service-codecontainer 
 
-  redis-queue-service-codewin:
+  redis-queue-service-codecontainer:
     <<: *redis-defaults
     volumes:
-      - frappe-redis-queue-data-codewin:/data
+      - frappe-redis-queue-data-codecontainer:/data
 
-  redis-cache-service-codewin:
+  redis-cache-service-codecontainer:
     <<: *redis-defaults
     volumes:
-      - frappe-redis-cache-data-codewin:/data
+      - frappe-redis-cache-data-codecontainer:/data
 
 volumes:
-  services-logs-data-codewin:
-  frappe-code-data-codewin:
-  frappe-sites-data-codewin:
-  frappe-env-data-codewin:
-  frappe-db-data-codewin:
-  frappe-redis-queue-data-codewin:
-  frappe-redis-cache-data-codewin:
+  services-logs-data-codecontainer:
+  frappe-code-data-codecontainer:
+  frappe-sites-data-codecontainer:
+  frappe-env-data-codecontainer:
+  frappe-db-data-codecontainer:
+  frappe-redis-queue-data-codecontainer:
+  frappe-redis-cache-data-codecontainer:
 
 networks:
-  frappe-network-codewin:
+  frappe-network-codecontainer:
     driver: bridge
