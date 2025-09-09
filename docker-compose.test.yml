@@ -313,7 +313,8 @@ networks:
 
 # --- End of Services --- #
 
-# Em caso de erro relacionado a pastas dos volumes não existirem, crie as pastas com o comando abaixo:
+# Em caso de erro relacionado a pastas dos volumes 
+# não existirem, crie as pastas com o comando abaixo:
 # sudo mkdir -p \
 #   /home/frappe-test/frappe-bench/logs \
 #   /home/frappe-test/frappe-bench/apps \
