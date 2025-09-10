@@ -1,4 +1,4 @@
-# ../docker-compose.yml
+# ./.devcontainer/docker-compose.yml
 # --- YAML Anchors / Extensions ---
 x-frappe-image-network-defaults: &frappe-image-network-defaults
   image: frappe/erpnext:v15
@@ -39,7 +39,7 @@ services:
       REDIS_QUEUE: redis-queue-service-codecontainer:6379
       SOCKETIO_PORT: "9000"
     volumes:
-      - .../configurator-service/configurator_setup.sh:/home/frappe/frappe-bench/configurator_setup.sh
+      - ../configurator-service/configurator_setup.sh:/home/frappe/frappe-bench/configurator_setup.sh
       - ./frappe-bench:/home/frappe/frappe-bench/sites
       - ./frappe-bench:/home/frappe/frappe-bench/apps
       - ./frappe-bench:/home/frappe/frappe-bench/env
@@ -74,34 +74,6 @@ services:
       MYSQL_ROOT_USERNAME: root
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
-  frontend-service-codecontainer:
-    <<: *frappe-defaults
-    networks:
-      - frappe-network-codecontainer
-    depends_on:
-      create-site-service-codecontainer:
-        condition: service_completed_successfully
-    entrypoint: [bash, -c]
-    command:
-      - >
-        bash ../start_frontend.sh;
-    environment:
-      SITE_NAME: erp-codecontainer.growatt.app
-      BACKEND: backend-service-codecontainer:8000
-      FRAPPE_SITE_NAME_HEADER: erp-codecontainer.growatt.app
-      SOCKETIO: websocket-service-codecontainer:9000
-      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
-      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
-      UPSTREAM_REAL_IP_RECURSIVE: "off"
-      PROXY_READ_TIMEOUT: 120
-      CLIENT_MAX_BODY_SIZE: 50m
-    volumes:
-      - ./frappe-bench:/home/frappe/frappe-bench/sites
-      - ./frappe-bench:/home/frappe/frappe-bench/apps
-      - ./frappe-bench:/home/frappe/frappe-bench/env
-      - ./frappe-bench:/home/frappe/frappe-bench/logs
-      - ../frontend-service/start_frontend.sh:/home/frappe/frappe-bench/start_frontend.sh
-
   workspace-service-codecontainer:
     <<: *frappe-defaults
     networks:
@@ -112,7 +84,7 @@ services:
     working_dir: /workspace/development
     command: ["sleep", "infinity"]
     volumes:
-      - ../development:/workspace/development
+      - ../frappe-bench:/home/frappe/frappe-bench
 
   backend-service-codecontainer:
     <<: *frappe-defaults
@@ -123,7 +95,7 @@ services:
     entrypoint: [bash, -c]
     command: 
       - >
-        bash ../start_backend.sh;
+        bash ../start_backend.sh dev;
     volumes:
       - ../backend-service/start_backend.sh:/home/frappe/frappe-bench/start_backend.sh
       - ./frappe-bench:/home/frappe/frappe-bench/sites
@@ -134,69 +106,6 @@ services:
       DB_HOST: db-service-codecontainer
       DB_PORT: "3306"
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    
-  queue-long-service-codecontainer:
-    <<: *frappe-defaults
-    depends_on:
-      create-site-service-codecontainer:
-        condition: service_completed_successfully
-    working_dir: /home/frappe/frappe-bench
-    entrypoint: [bash, -c]
-    command: 
-      - >
-        bench worker --queue "long,default,short";
-    volumes:
-      - ./frappe-bench:/home/frappe/frappe-bench/sites
-      - ./frappe-bench:/home/frappe/frappe-bench/apps
-      - ./frappe-bench:/home/frappe/frappe-bench/env
-      - ./frappe-bench:/home/frappe/frappe-bench/logs
-
-  queue-short-service-codecontainer:
-    <<: *frappe-defaults
-    depends_on:
-      create-site-service-codecontainer:
-        condition: service_completed_successfully
-    working_dir: /home/frappe/frappe-bench
-    entrypoint: [bash, -c]
-    command: 
-      - >
-        bench worker --queue "default,short";
-    volumes:
-      - ./frappe-bench:/home/frappe/frappe-bench/sites
-      - ./frappe-bench:/home/frappe/frappe-bench/apps
-      - ./frappe-bench:/home/frappe/frappe-bench/env
-      - ./frappe-bench:/home/frappe/frappe-bench/logs
-
-  scheduler-service-codecontainer:
-    <<: *frappe-defaults
-    depends_on:
-      create-site-service-codecontainer:
-        condition: service_completed_successfully
-    working_dir: /home/frappe/frappe-bench
-    entrypoint: [bash, -c]
-    command: 
-      - >
-        bench schedule;
-    volumes:
-      - ./frappe-bench:/home/frappe/frappe-bench/sites
-      - ./frappe-bench:/home/frappe/frappe-bench/apps
-      - ./frappe-bench:/home/frappe/frappe-bench/env
-      - ./frappe-bench:/home/frappe/frappe-bench/logs
-
-  websocket-service-codecontainer:
-    <<: *frappe-defaults
-    depends_on:
-      create-site-service-codecontainer:
-        condition: service_completed_successfully
-    working_dir: /home/frappe/frappe-bench
-    entrypoint: [bash, -c]
-    command: 
-      - >
-        node /home/frappe/frappe-bench/apps/frappe/socketio.js;
-    volumes:
-      - ./frappe-bench:/home/frappe/frappe-bench/sites
-      - ./frappe-bench:/home/frappe/frappe-bench/logs
-      - ./frappe-bench:/home/frappe/frappe-bench/apps
 
   db-service-codecontainer:
     image: mariadb:10.6

@@ -4,6 +4,14 @@ set -e
 
 echo "Running start_backend.sh..."
 
+env="$1"
+if [ "$env" = "dev" ]; then
+  echo "🚀 Starting backend in development mode (bench start)..."
+  cd /home/frappe/frappe-bench || exit 1
+  bench start
+  exit 0
+fi
+
 echo "🚀 Starting gunicorn (frappe.app:application)..."
 
 CPU_CORES=$(nproc --all || echo 1)
