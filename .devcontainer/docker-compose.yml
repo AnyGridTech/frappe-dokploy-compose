@@ -29,7 +29,7 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bash ../configurator_setup.sh;
+        bash ./configurator_setup.sh;
         echo "✅ Container commands executed";
     environment:
       ENV: -codecontainer
@@ -56,9 +56,9 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bash ../create_site_setup.sh;
-        bash ../auto_setup_wizard.sh;
-        bash ../install_apps.sh erp-codecontainer.growatt.app '[]';
+        bash ./create_site_setup.sh;
+        bash ./auto_setup_wizard.sh;
+        bash ./install_apps.sh erp-codecontainer.growatt.app '[]';
         echo "✅ Container commands executed";
     volumes:
       - ./frappe-bench:/home/frappe/frappe-bench/sites
@@ -95,7 +95,7 @@ services:
     entrypoint: [bash, -c]
     command: 
       - >
-        bash ../start_backend.sh dev;
+        bash ./start_backend.sh dev;
     volumes:
       - ../backend-service/start_backend.sh:/home/frappe/frappe-bench/start_backend.sh
       - ./frappe-bench:/home/frappe/frappe-bench/sites
