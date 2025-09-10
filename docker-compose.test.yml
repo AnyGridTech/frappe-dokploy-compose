@@ -76,7 +76,9 @@ services:
       - >
         bash ./create_site_setup.sh;
         bash ./auto_setup_wizard.sh;
-        bash ./install_apps.sh;
+        bash ./install_apps.sh erp-test.growatt.app '[
+          {"name": "frappe_comment_agt", "url": "https://github.com/AnyGridTech/frappe-comment-agt.git"}
+        ]';
         echo "✅ Container commands executed";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites

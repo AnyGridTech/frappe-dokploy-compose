@@ -40,10 +40,10 @@ services:
       SOCKETIO_PORT: "9000"
     volumes:
       - .../configurator-service/configurator_setup.sh:/home/frappe/frappe-bench/configurator_setup.sh
-      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
-      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
+      - ./frappe-bench:/home/frappe/frappe-bench/sites
+      - ./frappe-bench:/home/frappe/frappe-bench/apps
+      - ./frappe-bench:/home/frappe/frappe-bench/env
+      - ./frappe-bench:/home/frappe/frappe-bench/logs
 
   create-site-service-codecontainer:
     <<: *frappe-image-network-defaults
@@ -58,13 +58,13 @@ services:
       - >
         bash ../create_site_setup.sh;
         bash ../auto_setup_wizard.sh;
-        bash ../install_apps.sh;
+        bash ../install_apps.sh erp-codecontainer.growatt.app '[]';
         echo "✅ Container commands executed";
     volumes:
-      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
-      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
+      - ./frappe-bench:/home/frappe/frappe-bench/sites
+      - ./frappe-bench:/home/frappe/frappe-bench/apps
+      - ./frappe-bench:/home/frappe/frappe-bench/env
+      - ./frappe-bench:/home/frappe/frappe-bench/logs
       - ../create-site-service/auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh
       - ../create-site-service/install_apps.sh:/home/frappe/frappe-bench/install_apps.sh
       - ../create-site-service/create_site_setup.sh:/home/frappe/frappe-bench/create_site_setup.sh
@@ -96,10 +96,10 @@ services:
       PROXY_READ_TIMEOUT: 120
       CLIENT_MAX_BODY_SIZE: 50m
     volumes:
-      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
-      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
+      - ./frappe-bench:/home/frappe/frappe-bench/sites
+      - ./frappe-bench:/home/frappe/frappe-bench/apps
+      - ./frappe-bench:/home/frappe/frappe-bench/env
+      - ./frappe-bench:/home/frappe/frappe-bench/logs
       - ../frontend-service/start_frontend.sh:/home/frappe/frappe-bench/start_frontend.sh
 
   workspace-service-codecontainer:
@@ -126,10 +126,10 @@ services:
         bash ../start_backend.sh;
     volumes:
       - ../backend-service/start_backend.sh:/home/frappe/frappe-bench/start_backend.sh
-      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
-      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
+      - ./frappe-bench:/home/frappe/frappe-bench/sites
+      - ./frappe-bench:/home/frappe/frappe-bench/apps
+      - ./frappe-bench:/home/frappe/frappe-bench/env
+      - ./frappe-bench:/home/frappe/frappe-bench/logs
     environment:
       DB_HOST: db-service-codecontainer
       DB_PORT: "3306"
@@ -146,10 +146,10 @@ services:
       - >
         bench worker --queue "long,default,short";
     volumes:
-      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
-      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
+      - ./frappe-bench:/home/frappe/frappe-bench/sites
+      - ./frappe-bench:/home/frappe/frappe-bench/apps
+      - ./frappe-bench:/home/frappe/frappe-bench/env
+      - ./frappe-bench:/home/frappe/frappe-bench/logs
 
   queue-short-service-codecontainer:
     <<: *frappe-defaults
@@ -162,10 +162,10 @@ services:
       - >
         bench worker --queue "default,short";
     volumes:
-      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
-      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
+      - ./frappe-bench:/home/frappe/frappe-bench/sites
+      - ./frappe-bench:/home/frappe/frappe-bench/apps
+      - ./frappe-bench:/home/frappe/frappe-bench/env
+      - ./frappe-bench:/home/frappe/frappe-bench/logs
 
   scheduler-service-codecontainer:
     <<: *frappe-defaults
@@ -178,10 +178,10 @@ services:
       - >
         bench schedule;
     volumes:
-      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
-      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
-      - frappe-env-data-codecontainer:/home/frappe/frappe-bench/env
-      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
+      - ./frappe-bench:/home/frappe/frappe-bench/sites
+      - ./frappe-bench:/home/frappe/frappe-bench/apps
+      - ./frappe-bench:/home/frappe/frappe-bench/env
+      - ./frappe-bench:/home/frappe/frappe-bench/logs
 
   websocket-service-codecontainer:
     <<: *frappe-defaults
@@ -194,9 +194,9 @@ services:
       - >
         node /home/frappe/frappe-bench/apps/frappe/socketio.js;
     volumes:
-      - frappe-sites-data-codecontainer:/home/frappe/frappe-bench/sites
-      - services-logs-data-codecontainer:/home/frappe/frappe-bench/logs
-      - frappe-code-data-codecontainer:/home/frappe/frappe-bench/apps
+      - ./frappe-bench:/home/frappe/frappe-bench/sites
+      - ./frappe-bench:/home/frappe/frappe-bench/logs
+      - ./frappe-bench:/home/frappe/frappe-bench/apps
 
   db-service-codecontainer:
     image: mariadb:10.6
@@ -250,10 +250,6 @@ services:
       - frappe-redis-cache-data-codecontainer:/data
 
 volumes:
-  services-logs-data-codecontainer:
-  frappe-code-data-codecontainer:
-  frappe-sites-data-codecontainer:
-  frappe-env-data-codecontainer:
   frappe-db-data-codecontainer:
   frappe-redis-queue-data-codecontainer:
   frappe-redis-cache-data-codecontainer:
