@@ -28,7 +28,7 @@ until [[ -n $(grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empt
 do
   sleep 2
   if (( $(date +%s) - start > max_wait_time )); then
-    echo "❌ could not find sites/common_site_config.json with required keys"
+    echo "⛔ Timeout reached after $max_wait_time seconds waiting for sites/common_site_config.json"
     exit 1
   fi
 done

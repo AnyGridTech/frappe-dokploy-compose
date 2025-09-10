@@ -38,6 +38,7 @@ services:
 
   configurator-service-devcontainer:
     <<: *frappe-image-network-defaults
+    working_dir: /home/frappe/frappe-bench
     deploy:
       restart_policy:
         condition: none
@@ -47,9 +48,8 @@ services:
         condition: service_completed_successfully
     command:
       - >
-        bash ./configurator_setup.sh;
+        bash ./configurator_setup.sh dev;
         echo "✅ Container commands executed";
-    working_dir: /home/frappe/frappe-bench
     environment:
       ENV: -devcontainer
       DB_HOST: db-service-devcontainer
@@ -63,6 +63,7 @@ services:
 
   create-site-service-devcontainer:
     <<: *frappe-image-network-defaults
+    working_dir: /home/frappe/frappe-bench
     depends_on:
       configurator-service-devcontainer:
         condition: service_completed_successfully
@@ -76,7 +77,6 @@ services:
         bash ./auto_setup_wizard.sh;
         bash ./install_apps.sh erp-devcontainer.growatt.app '[]';
         echo "✅ Container commands executed";
-    working_dir: /home/frappe/frappe-bench
     volumes:
       - frappe-bench:/home/frappe/frappe-bench
       - ../create-site-service/auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh
@@ -90,22 +90,22 @@ services:
 
   workspace-service-devcontainer:
     <<: *frappe-defaults
+    working_dir: /home/frappe/frappe-bench
     networks:
       - frappe-network-devcontainer
     depends_on:
       create-site-service-devcontainer:
         condition: service_completed_successfully
-    working_dir: /home/frappe/frappe-bench
     command: ["sleep", "infinity"]
     volumes:
       - frappe-bench:/home/frappe/frappe-bench
 
   backend-service-devcontainer:
     <<: *frappe-defaults
+    working_dir: /home/frappe/frappe-bench
     depends_on:
       create-site-service-devcontainer:
         condition: service_completed_successfully
-    working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
     command: 
       - >
@@ -120,10 +120,10 @@ services:
 
   queue-long-service-devcontainer:
     <<: *frappe-defaults
+    working_dir: /home/frappe/frappe-bench
     depends_on:
       create-site-service-devcontainer:
         condition: service_completed_successfully
-    working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
     command: 
       - >
@@ -133,10 +133,10 @@ services:
 
   queue-short-service-devcontainer:
     <<: *frappe-defaults
+    working_dir: /home/frappe/frappe-bench
     depends_on:
       create-site-service-devcontainer:
         condition: service_completed_successfully
-    working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
     command: 
       - >
@@ -146,10 +146,10 @@ services:
 
   scheduler-service-devcontainer:
     <<: *frappe-defaults
+    working_dir: /home/frappe/frappe-bench
     depends_on:
       create-site-service-devcontainer:
         condition: service_completed_successfully
-    working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
     command: 
       - >
@@ -159,10 +159,10 @@ services:
 
   websocket-service-devcontainer:
     <<: *frappe-defaults
+    working_dir: /home/frappe/frappe-bench
     depends_on:
       create-site-service-devcontainer:
         condition: service_completed_successfully
-    working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
     command: 
       - >
