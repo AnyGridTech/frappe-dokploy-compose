@@ -6,8 +6,12 @@ echo "Running start_backend.sh..."
 
 env="$1"
 if [ "$env" = "dev" ]; then
-  echo "🚀 Starting backend in development mode (bench start)..."
+  echo "🚀 Starting backend in development mode..."
   cd /home/frappe/frappe-bench || exit 1
+  if [ ! -f "Procfile" ]; then
+    echo "web: bench serve --port 8000" > Procfile
+    echo "watch: bench watch" >> Procfile
+  fi
   bench start
   exit 0
 fi

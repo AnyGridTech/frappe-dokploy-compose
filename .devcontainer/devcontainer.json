@@ -23,7 +23,7 @@
     }
   },
   "dockerComposeFile": "./docker-compose.yml",
-  "service": "workspace-service-codecontainer",
+  "service": "workspace-service-devcontainer",
   "workspaceFolder": "/home/frappe/frappe-bench",
   "shutdownAction": "stopCompose",
   "mounts": [

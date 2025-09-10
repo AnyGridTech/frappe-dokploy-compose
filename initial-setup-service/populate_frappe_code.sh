@@ -1,10 +1,29 @@
 #!/bin/bash
-# ./populate_frappe_code.sh
+# ./populate_frappe_code.sh <?env>
 set -e
 
 echo "Running populate_frappe_code.sh..."
+trap 'echo "Finished populate_frappe_code.sh"' EXIT
 
-if [ -d /mnt/apps/frappe ] && [ -d /mnt/apps/erpnext ]; then
+BENCH_DIR_APP="/home/frappe/frappe-bench"
+BENCH_DIR_HOST="/mnt"
+
+populate_frappe_code() {
+    echo "📦 Populating $BENCH_DIR_HOST from image folders..."
+    cp -a "$BENCH_DIR_APP/." "$BENCH_DIR_HOST/"
+    chown -R 1000:1000 "$BENCH_DIR_HOST" || true
+    echo "✅ apps/ populated."
+}
+
+env="$1"
+
+if [ "$env" = "dev" ]; then
+    echo "Development environment detected."
+    populate_frappe_code
+    exit 0
+fi
+
+if [ -d "$BENCH_DIR_HOST/frappe" ] && [ -d "$BENCH_DIR_HOST/erpnext" ]; then
   echo "✅ apps/ already populated."
   echo "Finished populate_frappe_code.sh"
   exit 0
@@ -18,9 +37,9 @@ fi
 # tornando o repositório 'válido' para a biblioteca GitPython.
 
 no_frappe_git="false"
-[ ! -d "/home/frappe/frappe-bench/apps/frappe/.git" ] && no_frappe_git=true
+[ ! -d "$BENCH_DIR_APP/apps/frappe/.git" ] && no_frappe_git=true
 no_erpnext_git="false"
-[ ! -d "/home/frappe/frappe-bench/apps/erpnext/.git" ] && no_erpnext_git=true
+[ ! -d "$BENCH_DIR_APP/apps/erpnext/.git" ] && no_erpnext_git=true
 
 if [ "$no_frappe_git" ] || [ "$no_erpnext_git" ]; then
     echo "⚠️ Detected missing .git directories in apps/frappe or apps/erpnext."
@@ -31,30 +50,25 @@ if [ "$no_frappe_git" ] || [ "$no_erpnext_git" ]; then
     git config --global user.name "troyaks1"
     git config --global user.email "lgotcfg@gmail.com"
     echo "Configuring Git safe directories..."
-    git config --global --add safe.directory /home/frappe/frappe-bench/apps/frappe
-    git config --global --add safe.directory /home/frappe/frappe-bench/apps/erpnext
+    git config --global --add safe.directory $BENCH_DIR_APP/apps/frappe
+    git config --global --add safe.directory $BENCH_DIR_APP/apps/erpnext
 fi
 
 if [ "$no_frappe_git" ]; then
     echo "🔄 Initializing dummy Git repo in apps/frappe..."
-    cd /home/frappe/frappe-bench/apps/frappe
+    cd $BENCH_DIR_APP/apps/frappe
     git init -b main > /dev/null
     git commit --allow-empty -m "Initial commit for compatibility" > /dev/null
-    cd /home/frappe/frappe-bench
+    cd $BENCH_DIR_APP
 fi
 
 if [ "$no_erpnext_git" ]; then
     echo "🔄 Initializing dummy Git repo in apps/erpnext..."
-    cd /home/frappe/frappe-bench/apps/erpnext
+    cd $BENCH_DIR_APP/apps/erpnext
     git init -b main > /dev/null
     git commit --allow-empty -m "Initial commit for compatibility" > /dev/null
-    cd /home/frappe/frappe-bench
+    cd $BENCH_DIR_APP
 fi
 # --- BENCH SETUP REQUIREMENTS WORKAROUND END ---
 
-echo "📦 Populating /mnt/apps from image folders..."
-cp -a /home/frappe/frappe-bench/apps/. /mnt/apps/
-chown -R 1000:1000 /mnt/apps || true
-echo "✅ apps/ populated."
-
-echo "Finished populate_frappe_code.sh"
+populate_frappe_code

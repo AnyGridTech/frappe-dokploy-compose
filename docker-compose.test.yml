@@ -33,7 +33,7 @@ services:
         bash /populate_frappe_code.sh;
         echo "✅ Container commands executed";
     volumes:
-      - frappe-code-data-test:/mnt/apps
+      - frappe-code-data-test:/mnt
       - ./initial-setup-service/populate_frappe_code.sh:/populate_frappe_code.sh
 
   configurator-service-test:
@@ -316,14 +316,3 @@ networks:
     external: true
 
 # --- End of Services --- #
-
-# Em caso de erro relacionado a pastas dos volumes 
-# não existirem, crie as pastas com o comando abaixo:
-# sudo mkdir -p \
-#   /home/frappe-test/frappe-bench/logs \
-#   /home/frappe-test/frappe-bench/apps \
-#   /home/frappe-test/frappe-bench/sites \
-#   /home/frappe-test/frappe-bench/env \
-#   /home/frappe-test/maria-db/data \
-#   /home/frappe-test/redis-cache/data \
-#   /home/frappe-test/redis-queue/data  
