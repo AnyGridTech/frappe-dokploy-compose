@@ -23,8 +23,8 @@
     }
   },
   "dockerComposeFile": "./docker-compose.yml",
-  "service": "frappe",
-  "workspaceFolder": "/workspace/development",
+  "service": "workspace-service-devcontainer",
+  "workspaceFolder": "/home/frappe/frappe-bench",
   "shutdownAction": "stopCompose",
   "mounts": [
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/frappe/.ssh,type=bind,consistency=cached"

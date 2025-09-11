@@ -40,6 +40,7 @@ echo "Using MySQL root password: ${MYSQL_ROOT_PASSWORD:0:3}********"
 
 bench new-site --mariadb-user-host-login-scope='%' \
   --admin-password=${MYSQL_ROOT_PASSWORD} \
-  --db-root-username=root --db-root-password=${MYSQL_ROOT_PASSWORD} \
+  --db-root-username=root \
+  --db-root-password=${MYSQL_ROOT_PASSWORD} \
   --install-app erpnext \
   --set-default ${SITE_NAME}

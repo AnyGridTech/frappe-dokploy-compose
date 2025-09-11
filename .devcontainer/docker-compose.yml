@@ -1,233 +1,92 @@
-# ./.devcontainer/docker-compose.yml
-# --- YAML Anchors / Extensions ---
-x-frappe-image-network-defaults: &frappe-image-network-defaults
-  image: frappe/erpnext:v15
-  networks:
-    - frappe-network-devcontainer
-
-x-frappe-service-defaults: &frappe-defaults
-  <<: *frappe-image-network-defaults
-  deploy:
-    restart_policy:
-      condition: on-failure
-
-x-redis-defaults: &redis-defaults
-  image: redis:6.2-alpine
-  networks:
-    - frappe-network-devcontainer
-  deploy:
-    restart_policy:
-      condition: on-failure
-
-# --- Services --- #
+version: "3.7"
 services:
-  initial-setup-devcontainer:
-    <<: *frappe-defaults
-    user: "0:0"
-    deploy:
-      restart_policy:
-        condition: none
-    entrypoint: [bash, -c]
-    command: 
-      - >
-        bash /populate_frappe_code.sh dev;
-        echo "✅ Container commands executed";
-    volumes:
-      - frappe-bench:/mnt
-      - ../initial-setup-service/populate_frappe_code.sh:/populate_frappe_code.sh
-
-  configurator-service-devcontainer:
-    <<: *frappe-image-network-defaults
-    working_dir: /home/frappe/frappe-bench
-    deploy:
-      restart_policy:
-        condition: none
-    entrypoint: [bash, -c]
-    depends_on:
-      initial-setup-devcontainer:
-        condition: service_completed_successfully
-    command:
-      - >
-        bash ./configurator_setup.sh dev;
-        echo "✅ Container commands executed";
-    environment:
-      ENV: -devcontainer
-      DB_HOST: db-service-devcontainer
-      DB_PORT: "3306"
-      REDIS_CACHE: redis-cache-service-devcontainer:6379
-      REDIS_QUEUE: redis-queue-service-devcontainer:6379
-      SOCKETIO_PORT: "9000"
-    volumes:
-      - ../configurator-service/configurator_setup.sh:/home/frappe/frappe-bench/configurator_setup.sh
-      - frappe-bench:/home/frappe/frappe-bench
-
-  create-site-service-devcontainer:
-    <<: *frappe-image-network-defaults
-    working_dir: /home/frappe/frappe-bench
-    depends_on:
-      configurator-service-devcontainer:
-        condition: service_completed_successfully
-    deploy:
-      restart_policy:
-        condition: none
-    entrypoint: [bash, -c]
-    command:
-      - >
-        bash ./create_site_setup.sh;
-        bash ./auto_setup_wizard.sh;
-        bash ./install_apps.sh erp-devcontainer.growatt.app '[]';
-        echo "✅ Container commands executed";
-    volumes:
-      - frappe-bench:/home/frappe/frappe-bench
-      - ../create-site-service/auto_setup_wizard.sh:/home/frappe/frappe-bench/auto_setup_wizard.sh
-      - ../create-site-service/install_apps.sh:/home/frappe/frappe-bench/install_apps.sh
-      - ../create-site-service/create_site_setup.sh:/home/frappe/frappe-bench/create_site_setup.sh
-    environment:
-      ENV: -devcontainer
-      SITE_NAME: erp-devcontainer.growatt.app
-      MYSQL_ROOT_USERNAME: root
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-
-  workspace-service-devcontainer:
-    <<: *frappe-defaults
-    working_dir: /home/frappe/frappe-bench
-    networks:
-      - frappe-network-devcontainer
-    depends_on:
-      create-site-service-devcontainer:
-        condition: service_completed_successfully
-    command: ["sleep", "infinity"]
-    volumes:
-      - frappe-bench:/home/frappe/frappe-bench
-
-  backend-service-devcontainer:
-    <<: *frappe-defaults
-    working_dir: /home/frappe/frappe-bench
-    depends_on:
-      create-site-service-devcontainer:
-        condition: service_completed_successfully
-    entrypoint: [bash, -c]
-    command: 
-      - >
-        bash ./start_backend.sh dev;
-    volumes:
-      - ../backend-service/start_backend.sh:/home/frappe/frappe-bench/start_backend.sh
-      - frappe-bench:/home/frappe/frappe-bench
-    environment:
-      DB_HOST: db-service-devcontainer
-      DB_PORT: "3306"
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-
-  queue-long-service-devcontainer:
-    <<: *frappe-defaults
-    working_dir: /home/frappe/frappe-bench
-    depends_on:
-      create-site-service-devcontainer:
-        condition: service_completed_successfully
-    entrypoint: [bash, -c]
-    command: 
-      - >
-        bench worker --queue "long,default,short";
-    volumes:
-      - frappe-bench:/home/frappe/frappe-bench/
-
-  queue-short-service-devcontainer:
-    <<: *frappe-defaults
-    working_dir: /home/frappe/frappe-bench
-    depends_on:
-      create-site-service-devcontainer:
-        condition: service_completed_successfully
-    entrypoint: [bash, -c]
-    command: 
-      - >
-        bench worker --queue "default,short";
-    volumes:
-      - frappe-bench:/home/frappe/frappe-bench/
-
-  scheduler-service-devcontainer:
-    <<: *frappe-defaults
-    working_dir: /home/frappe/frappe-bench
-    depends_on:
-      create-site-service-devcontainer:
-        condition: service_completed_successfully
-    entrypoint: [bash, -c]
-    command: 
-      - >
-        bench schedule;
-    volumes:
-      - frappe-bench:/home/frappe/frappe-bench/
-
-  websocket-service-devcontainer:
-    <<: *frappe-defaults
-    working_dir: /home/frappe/frappe-bench
-    depends_on:
-      create-site-service-devcontainer:
-        condition: service_completed_successfully
-    entrypoint: [bash, -c]
-    command: 
-      - >
-        node /home/frappe/frappe-bench/apps/frappe/socketio.js;
-    volumes:
-      - frappe-bench:/home/frappe/frappe-bench/
-
-  db-service-devcontainer:
-    image: mariadb:10.6
-    networks:
-      - frappe-network-devcontainer
-    deploy:
-      restart_policy:
-        condition: on-failure
-    healthcheck:
-      test: mysqladmin ping -h localhost --password=$$MYSQL_ROOT_PASSWORD
-      interval: 60s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
+  mariadb:
+    image: docker.io/mariadb:10.6
+    platform: linux/amd64
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --skip-character-set-client-handshake
-      - --skip-innodb-read-only-compressed
-      - --max_allowed_packet=64M
+      - --skip-innodb-read-only-compressed # Temporary fix for MariaDB 10.6
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: 123
     volumes:
-      - frappe-db-data-devcontainer:/var/lib/mysql
+      - mariadb-data:/var/lib/mysql
 
-  phpmyadmin-service-devcontainer:
-    image: phpmyadmin/phpmyadmin
-    depends_on:
-      db-service-devcontainer:
-        condition: service_healthy
-    networks:
-      - frappe-network-devcontainer
+  # Enable PostgreSQL only if you use it, see development/README.md for more information.
+  # postgresql:
+  #   image: postgres:11.8
+  #   environment:
+  #     POSTGRES_PASSWORD: 123
+  #   volumes:
+  #     - postgresql-data:/var/lib/postgresql/data
+
+  # Enable Mailpit if you need to test outgoing mail services
+  # See https://mailpit.axllent.org/
+  #  mailpit:
+  #    image: axllent/mailpit
+  #    volumes:
+  #      - mailpit-data:/data
+  #    ports:
+  #      - 8025:8025
+  #      - 1025:1025
+  #    environment:
+  #      MP_MAX_MESSAGES: 5000
+  #      MP_DATA_FILE: /data/mailpit.db
+  #      MP_SMTP_AUTH_ACCEPT_ANY: 1
+  #      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+  redis-cache:
+    image: docker.io/redis:alpine
+    platform: linux/amd64
+
+  redis-queue:
+    image: docker.io/redis:alpine
+    platform: linux/amd64
+
+  frappe:
+    image: docker.io/frappe/bench:latest
+    platform: linux/amd64
+    command: sleep infinity
     environment:
-      PMA_HOST: db-service-devcontainer
-      PMA_PORT: 3306
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      UPLOAD_LIMIT: 500M
-      MAX_EXECUTION_TIME: 600
-      MEMORY_LIMIT: 512M
-    links:
-      - db-service-devcontainer
-
-  redis-queue-service-devcontainer:
-    <<: *redis-defaults
+      - SHELL=/bin/bash
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     volumes:
-      - frappe-redis-queue-data-devcontainer:/data
-
-  redis-cache-service-devcontainer:
-    <<: *redis-defaults
-    volumes:
-      - frappe-redis-cache-data-devcontainer:/data
-
-
+      - ..:/workspace:cached
+      # Enable if you require git cloning
+      # - ${HOME}/.ssh:/home/frappe/.ssh
+    working_dir: /workspace/development
+    ports:
+      - 8000-8005:8000-8005
+      - 9000-9005:9000-9005
+  # enable the below service if you need Cypress UI Tests to be executed
+  # Before enabling ensure install_x11_deps.sh has been executed and display variable is exported.
+  # Run install_x11_deps.sh again if DISPLAY is not set
+  # ui-tester:
+  #   # pass custom command to start Cypress otherwise it will use the entrypoint
+  #   # specified in the Cypress Docker image.
+  #   # also pass "--project <folder>" so that when Cypress opens
+  #   # it can find file "cypress.json" and show integration specs
+  #   # https://on.cypress.io/command-line#cypress-open
+  #   entrypoint: 'sleep infinity'
+  #   image: "docker.io/cypress/included:latest"
+  #   environment:
+  #     - SHELL=/bin/bash
+  #     # get the IP address of the host machine and allow X11 to accept
+  #     # incoming connections from that IP address
+  #     #   IP=$(ipconfig getifaddr en0) or mac or \
+  #     #   IP=$($(hostname -I | awk '{print $1}') )  for Ubuntu
+  #     #   /usr/X11/bin/xhost + $IP
+  #     # then pass the environment variable DISPLAY to show Cypress GUI on the host system
+  #     #   DISPLAY=$IP:0
+  #     - DISPLAY
+  #   volumes:
+  #     # for Cypress to communicate with the X11 server pass this socket file
+  #     # in addition to any other mapped volumes
+  #     - /tmp/.X11-unix:/tmp/.X11-unix
+  #     - ..:/workspace:z,cached
+  #   network_mode: "host"
 volumes:
-  frappe-bench:
-  frappe-db-data-devcontainer:
-  frappe-redis-queue-data-devcontainer:
-  frappe-redis-cache-data-devcontainer:
-
-networks:
-  frappe-network-devcontainer:
-    driver: bridge
+  mariadb-data:
+  #postgresql-data:
+  #mailpit-data:

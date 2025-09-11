@@ -1,0 +1,214 @@
+# ./.devcontainer/docker-compose.yml
+# --- YAML Anchors / Extensions ---
+x-frappe-image-network-defaults: &frappe-image-network-defaults
+  image: frappe/erpnext:v15
+  networks:
+    - frappe-network-devcontainer
+
+x-frappe-service-defaults: &frappe-defaults
+  <<: *frappe-image-network-defaults
+  deploy:
+    restart_policy:
+      condition: on-failure
+
+x-redis-defaults: &redis-defaults
+  image: redis:6.2-alpine
+  networks:
+    - frappe-network-devcontainer
+  deploy:
+    restart_policy:
+      condition: on-failure
+
+# --- Services --- #
+services:
+  configurator-service-devcontainer:
+    <<: *frappe-image-network-defaults
+    working_dir: /home/frappe/frappe-bench
+    deploy:
+      restart_policy:
+        condition: none
+    entrypoint: [bash, -c]
+    command:
+      - >
+        bash /run/configurator_setup.sh dev;
+        echo "✅ Container commands executed";
+    environment:
+      ENV: -devcontainer
+      DB_HOST: db-service-devcontainer
+      DB_PORT: "3306"
+      REDIS_CACHE: redis-cache-service-devcontainer:6379
+      REDIS_QUEUE: redis-queue-service-devcontainer:6379
+      SOCKETIO_PORT: "9000"
+    volumes:
+      - ../configurator-service/configurator_setup.sh:/run/configurator_setup.sh
+      - frappe-bench:/home/frappe/frappe-bench
+
+  create-site-service-devcontainer:
+    <<: *frappe-image-network-defaults
+    working_dir: /home/frappe/frappe-bench
+    depends_on:
+      configurator-service-devcontainer:
+        condition: service_completed_successfully
+    deploy:
+      restart_policy:
+        condition: none
+    entrypoint: [bash, -c]
+    command:
+      - >
+        bash /run/create_site_setup.sh;
+        bash /run/auto_setup_wizard.sh;
+        bash /run/install_apps.sh erp-devcontainer.growatt.app '[]';
+        echo "✅ Container commands executed";
+    volumes:
+      - frappe-bench:/home/frappe/frappe-bench
+      - ../create-site-service/auto_setup_wizard.sh:/run/auto_setup_wizard.sh
+      - ../create-site-service/install_apps.sh:/run/install_apps.sh
+      - ../create-site-service/create_site_setup.sh:/run/create_site_setup.sh
+    environment:
+      ENV: -devcontainer
+      SITE_NAME: erp-devcontainer.growatt.app
+      MYSQL_ROOT_USERNAME: root
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+  workspace-service-devcontainer:
+    <<: *frappe-defaults
+    working_dir: /home/frappe/frappe-bench
+    networks:
+      - frappe-network-devcontainer
+    depends_on:
+      create-site-service-devcontainer:
+        condition: service_completed_successfully
+    command: ["sleep", "infinity"]
+    volumes:
+      - frappe-bench:/home/frappe/frappe-bench
+
+  backend-service-devcontainer:
+    <<: *frappe-defaults
+    working_dir: /home/frappe/frappe-bench
+    depends_on:
+      create-site-service-devcontainer:
+        condition: service_completed_successfully
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        bash /run/start_backend.sh dev;
+    volumes:
+      - ../backend-service/start_backend.sh:/run/start_backend.sh
+      - frappe-bench:/home/frappe/frappe-bench
+    environment:
+      DB_HOST: db-service-devcontainer
+      DB_PORT: "3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+  queue-long-service-devcontainer:
+    <<: *frappe-defaults
+    working_dir: /home/frappe/frappe-bench
+    depends_on:
+      create-site-service-devcontainer:
+        condition: service_completed_successfully
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        bench worker --queue "long,default,short";
+    volumes:
+      - frappe-bench:/home/frappe/frappe-bench
+
+  queue-short-service-devcontainer:
+    <<: *frappe-defaults
+    working_dir: /home/frappe/frappe-bench
+    depends_on:
+      create-site-service-devcontainer:
+        condition: service_completed_successfully
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        bench worker --queue "default,short";
+    volumes:
+      - frappe-bench:/home/frappe/frappe-bench
+
+  scheduler-service-devcontainer:
+    <<: *frappe-defaults
+    working_dir: /home/frappe/frappe-bench
+    depends_on:
+      create-site-service-devcontainer:
+        condition: service_completed_successfully
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        bench schedule;
+    volumes:
+      - frappe-bench:/home/frappe/frappe-bench
+
+  websocket-service-devcontainer:
+    <<: *frappe-defaults
+    working_dir: /home/frappe/frappe-bench
+    depends_on:
+      create-site-service-devcontainer:
+        condition: service_completed_successfully
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        node /run/apps/frappe/socketio.js;
+    volumes:
+      - frappe-bench:/home/frappe/frappe-bench
+
+  db-service-devcontainer:
+    image: mariadb:10.6
+    networks:
+      - frappe-network-devcontainer
+    deploy:
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: mysqladmin ping -h localhost --password=$$MYSQL_ROOT_PASSWORD
+      interval: 60s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+      - --max_allowed_packet=64M
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - frappe-db-data-devcontainer:/var/lib/mysql
+
+  phpmyadmin-service-devcontainer:
+    image: phpmyadmin/phpmyadmin
+    depends_on:
+      db-service-devcontainer:
+        condition: service_healthy
+    networks:
+      - frappe-network-devcontainer
+    environment:
+      PMA_HOST: db-service-devcontainer
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      UPLOAD_LIMIT: 500M
+      MAX_EXECUTION_TIME: 600
+      MEMORY_LIMIT: 512M
+    links:
+      - db-service-devcontainer
+
+  redis-queue-service-devcontainer:
+    <<: *redis-defaults
+    volumes:
+      - frappe-redis-queue-data-devcontainer:/data
+
+  redis-cache-service-devcontainer:
+    <<: *redis-defaults
+    volumes:
+      - frappe-redis-cache-data-devcontainer:/data
+
+volumes:
+  frappe-bench:
+  frappe-db-data-devcontainer:
+  frappe-redis-queue-data-devcontainer:
+  frappe-redis-cache-data-devcontainer:
+
+networks:
+  frappe-network-devcontainer:
+    driver: bridge
