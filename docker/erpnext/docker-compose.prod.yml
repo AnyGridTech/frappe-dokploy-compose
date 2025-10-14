@@ -1,0 +1,318 @@
+# ./docker-compose.test.yml
+# --- YAML Anchors / Extensions ---
+x-frappe-image-network-defaults: &frappe-image-network-defaults
+  image: frappe/erpnext:v15
+  networks:
+    - frappe-network-prod
+
+x-frappe-service-defaults: &frappe-defaults
+  <<: *frappe-image-network-defaults
+  deploy:
+    restart_policy:
+      condition: on-failure
+
+x-redis-defaults: &redis-defaults
+  image: redis:6.2-alpine
+  networks:
+    - frappe-network-prod
+  deploy:
+    restart_policy:
+      condition: on-failure
+
+# --- Services --- #
+services:
+  initial-setup-prod:
+    <<: *frappe-defaults
+    user: "0:0"
+    deploy:
+      restart_policy:
+        condition: none
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        bash /populate_frappe_code.sh;
+        echo "✅ Container commands executed";
+    volumes:
+      - frappe-code-data-prod:/mnt
+      - ./initial-setup-service/populate_frappe_code.sh:/populate_frappe_code.sh
+
+  configurator-service-prod:
+    <<: *frappe-image-network-defaults
+    depends_on:
+      initial-setup-prod:
+        condition: service_completed_successfully
+    deploy:
+      restart_policy:
+        condition: none
+    entrypoint: [bash, -c]
+    command:
+      - >
+        bash /run/configurator_setup.sh;
+        echo "✅ Container commands executed";
+    environment:
+      ENV: -prod
+      DB_HOST: db-service-prod
+      DB_PORT: "3306"
+      REDIS_CACHE: redis-cache-service-prod:6379
+      REDIS_QUEUE: redis-queue-service-prod:6379
+      SOCKETIO_PORT: "9000"
+    volumes:
+      - ./configurator-service/configurator_setup.sh:/run/configurator_setup.sh
+      - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
+      - frappe-code-data-prod:/home/frappe/frappe-bench/apps
+      - frappe-env-data-prod:/home/frappe/frappe-bench/env
+      - services-logs-data-prod:/home/frappe/frappe-bench/logs
+
+  create-site-service-prod:
+    <<: *frappe-image-network-defaults
+    depends_on:
+      configurator-service-prod:
+        condition: service_completed_successfully
+    deploy:
+      restart_policy:
+        condition: none
+    entrypoint: [bash, -c]
+    command:
+      - >
+        bash /run/create_site_setup.sh;
+        bash /run/auto_setup_wizard.sh;
+        bash /run/install_apps.sh erp-prod.growatt.app '[
+          {"name": "frappe_comment_agt", "url": "https://github.com/AnyGridTech/frappe-comment-agt.git"}
+        ]';
+        echo "✅ Container commands executed";
+    volumes:
+      - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
+      - frappe-code-data-prod:/home/frappe/frappe-bench/apps
+      - frappe-env-data-prod:/home/frappe/frappe-bench/env
+      - services-logs-data-prod:/home/frappe/frappe-bench/logs
+      - ./create-site-service/auto_setup_wizard.sh:/run/auto_setup_wizard.sh
+      - ./create-site-service/install_apps.sh:/run/install_apps.sh
+      - ./create-site-service/create_site_setup.sh:/run/create_site_setup.sh
+    environment:
+      ENV: -prod
+      SITE_NAME: erp-prod.growatt.app
+      MYSQL_ROOT_USERNAME: root
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+  frontend-service-prod:
+    <<: *frappe-defaults
+    networks:
+      - frappe-network-prod
+      - dokploy-network
+    depends_on:
+      create-site-service-prod:
+        condition: service_completed_successfully
+    entrypoint: [bash, -c]
+    command:
+      - >
+        bash /run/start_frontend.sh;
+    environment:
+      SITE_NAME: erp-prod.growatt.app
+      BACKEND: backend-service-prod:8000
+      FRAPPE_SITE_NAME_HEADER: erp-prod.growatt.app
+      SOCKETIO: websocket-service-prod:9000
+      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      PROXY_READ_TIMEOUT: 120
+      CLIENT_MAX_BODY_SIZE: 50m
+    volumes:
+      - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
+      - frappe-code-data-prod:/home/frappe/frappe-bench/apps
+      - frappe-env-data-prod:/home/frappe/frappe-bench/env
+      - services-logs-data-prod:/home/frappe/frappe-bench/logs
+      - ./frontend-service/start_frontend.sh:/run/start_frontend.sh
+
+  backend-service-prod:
+    <<: *frappe-defaults
+    depends_on:
+      create-site-service-prod:
+        condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        bash /run/start_backend.sh;
+    volumes:
+      - ./backend-service/start_backend.sh:/run/start_backend.sh
+      - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
+      - frappe-code-data-prod:/home/frappe/frappe-bench/apps
+      - frappe-env-data-prod:/home/frappe/frappe-bench/env
+      - services-logs-data-prod:/home/frappe/frappe-bench/logs
+    environment:
+      DB_HOST: db-service-prod
+      DB_PORT: "3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    
+  queue-long-service-prod:
+    <<: *frappe-defaults
+    depends_on:
+      create-site-service-prod:
+        condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        bench worker --queue "long,default,short";
+    volumes:
+      - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
+      - frappe-code-data-prod:/home/frappe/frappe-bench/apps
+      - frappe-env-data-prod:/home/frappe/frappe-bench/env
+      - services-logs-data-prod:/home/frappe/frappe-bench/logs
+
+  queue-short-service-prod:
+    <<: *frappe-defaults
+    depends_on:
+      create-site-service-prod:
+        condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        bench worker --queue "default,short";
+    volumes:
+      - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
+      - frappe-code-data-prod:/home/frappe/frappe-bench/apps
+      - frappe-env-data-prod:/home/frappe/frappe-bench/env
+      - services-logs-data-prod:/home/frappe/frappe-bench/logs
+
+  scheduler-service-prod:
+    <<: *frappe-defaults
+    depends_on:
+      create-site-service-prod:
+        condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        bench schedule;
+    volumes:
+      - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
+      - frappe-code-data-prod:/home/frappe/frappe-bench/apps
+      - frappe-env-data-prod:/home/frappe/frappe-bench/env
+      - services-logs-data-prod:/home/frappe/frappe-bench/logs
+
+  websocket-service-prod:
+    <<: *frappe-defaults
+    depends_on:
+      create-site-service-prod:
+        condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        node /home/frappe/frappe-bench/apps/frappe/socketio.js;
+    volumes:
+      - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
+      - services-logs-data-prod:/home/frappe/frappe-bench/logs
+      - frappe-code-data-prod:/home/frappe/frappe-bench/apps
+
+  db-service-prod:
+    image: mariadb:10.6
+    networks:
+      - frappe-network-prod
+    deploy:
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: mysqladmin ping -h localhost --password=$$MYSQL_ROOT_PASSWORD
+      interval: 60s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+      - --max_allowed_packet=64M
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - frappe-db-data-prod:/var/lib/mysql
+
+  phpmyadmin-service-prod:
+    image: phpmyadmin/phpmyadmin
+    depends_on:
+      db-service-prod:
+        condition: service_healthy
+    networks:
+      - frappe-network-prod
+      - dokploy-network
+    environment:
+      PMA_HOST: db-service-prod
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      UPLOAD_LIMIT: 500M
+      MAX_EXECUTION_TIME: 600
+      MEMORY_LIMIT: 512M
+    links:
+      - db-service-prod 
+
+  redis-queue-service-prod:
+    <<: *redis-defaults
+    volumes:
+      - frappe-redis-queue-data-prod:/data
+
+  redis-cache-service-prod:
+    <<: *redis-defaults
+    volumes:
+      - frappe-redis-cache-data-prod:/data
+
+volumes:
+  services-logs-data-prod:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-prod/frappe-bench/logs
+      o: bind
+
+  frappe-code-data-prod:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-prod/frappe-bench/apps
+      o: bind,mode=0777
+
+  frappe-sites-data-prod:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-prod/frappe-bench/sites
+      o: bind
+  
+  frappe-env-data-prod:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-prod/frappe-bench/env
+      o: bind
+
+  frappe-db-data-prod:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-prod/maria-db/data
+      o: bind
+
+  frappe-redis-queue-data-prod:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-prod/redis-queue/data
+      o: bind
+
+  frappe-redis-cache-data-prod:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/frappe-prod/redis-cache/data
+      o: bind
+
+networks:
+  frappe-network-prod:
+    driver: bridge
+  dokploy-network:
+    external: true
+
+# --- End of Services --- #

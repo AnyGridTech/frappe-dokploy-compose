@@ -1,0 +1,25 @@
+services:
+  setup:
+    image: python:3.11-slim
+    container_name: insights_setup
+    restart: "no"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      PROJECT_NAME: insights_prod_setup
+      ADMIN_EMAIL: lgotcfg@gmail.com
+      SITE_DOMAIN: bi.growatt.app
+    command: >
+      bash -c "
+      apt-get update -qq &&
+      apt-get install -y wget curl unzip &&
+      wget -q https://frappe.io/easy-install.py &&
+      python3 easy-install.py deploy
+        --project=${PROJECT_NAME}
+        --email=${ADMIN_EMAIL}
+        --image=ghcr.io/frappe/insights
+        --version=stable
+        --app=insights
+        --sitename ${SITE_DOMAIN} &&
+      docker compose -p ${PROJECT_NAME} exec backend bench set-config -g server_script_enabled 1
+      "
