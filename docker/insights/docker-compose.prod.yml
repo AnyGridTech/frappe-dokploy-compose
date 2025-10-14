@@ -4,11 +4,8 @@ services:
     container_name: insights_setup
     restart: "no"
     volumes:
-      # permite que o setup crie containers Docker
       - /var/run/docker.sock:/var/run/docker.sock
-      # volume persistente do repositório frappe_docker
       - frappe_docker_data:/opt/frappe_docker
-      # volume persistente para sites, logs e outros arquivos
       - frappe_sites_data:/opt/frappe_docker/sites
       - frappe_logs_data:/opt/frappe_docker/logs
     environment:
