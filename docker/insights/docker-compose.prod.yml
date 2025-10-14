@@ -13,16 +13,7 @@ services:
       bash -c "
       apt-get update -qq &&
       apt-get install -y wget curl unzip docker.io &&
-      export PROJECT_NAME=${PROJECT_NAME} &&
-      export ADMIN_EMAIL=${ADMIN_EMAIL} &&
-      export SITE_DOMAIN=${SITE_DOMAIN} &&
       wget -q https://frappe.io/easy-install.py -O easy-install.py &&
-      python3 easy-install.py deploy
-        --project=${PROJECT_NAME}
-        --email=${ADMIN_EMAIL}
-        --image=ghcr.io/frappe/insights
-        --version=stable
-        --app=insights
-        --sitename=${SITE_DOMAIN} &&
+      python3 easy-install.py deploy --project=${PROJECT_NAME} --email=${ADMIN_EMAIL} --image=ghcr.io/frappe/insights --version=stable --app=insights --sitename=${SITE_DOMAIN} &&
       docker compose -p ${PROJECT_NAME} exec backend bench set-config -g server_script_enabled 1
       "
