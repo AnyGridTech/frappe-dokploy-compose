@@ -12,8 +12,8 @@ services:
     command: >
       bash -c "
       apt-get update -qq &&
-      apt-get install -y wget curl unzip &&
-      wget -q https://frappe.io/easy-install.py &&
+      apt-get install -y wget curl unzip docker.io &&
+      wget -q https://frappe.io/easy-install.py -O easy-install.py &&
       python3 easy-install.py deploy
         --project=${PROJECT_NAME}
         --email=${ADMIN_EMAIL}
