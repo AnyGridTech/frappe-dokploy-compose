@@ -10,7 +10,7 @@ BENCH_DIR_HOST="/mnt"
 
 populate_frappe_code() {
     echo "📦 Populating $BENCH_DIR_HOST from image folders..."
-    cp -a "$BENCH_DIR_APP/." "$BENCH_DIR_HOST/"
+    cp -a "$BENCH_DIR_APP/apps/." "$BENCH_DIR_HOST/"
     chown -R 1000:1000 "$BENCH_DIR_HOST" || true
     echo "✅ apps/ populated."
 }
@@ -23,7 +23,7 @@ if [ "$env" = "dev" ]; then
     exit 0
 fi
 
-if [ -d "$BENCH_DIR_HOST/frappe" ] && [ -d "$BENCH_DIR_HOST/erpnext" ]; then
+if [ -d "$BENCH_DIR_HOST/frappe/.git" ] && [ -d "$BENCH_DIR_HOST/erpnext/.git" ]; then
   echo "✅ apps/ already populated."
   echo "Finished populate_frappe_code.sh"
   exit 0
