@@ -50,7 +50,6 @@ install_app() {
 
   if [ ! -d "$APPS_DIR/$app_name" ]; then
     echo "🔄 Getting app $app_name..."
-
     if [ -z "$repo_url" ]; then
       bench get-app "$app_name"
     elif [ -z "$branch" ]; then
@@ -68,7 +67,7 @@ install_app() {
   bench --site "$SITE_NAME" install-app "$app_name"
 }
 
-# loop over array of {name, url}
+# loop over array of {name, url, branch} objects in APPS_JSON
 echo "$APPS_JSON" | jq -c '.[]' | while read -r app; do
   name=$(echo "$app" | jq -r '.name')
   url=$(echo "$app" | jq -r '.url')
