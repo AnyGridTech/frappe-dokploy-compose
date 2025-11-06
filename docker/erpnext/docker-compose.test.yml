@@ -34,7 +34,7 @@ services:
         echo "✅ Container commands executed";
     volumes:
       - frappe-code-data-test:/mnt
-      - ./initial-setup-service/populate_frappe_code.sh:/populate_frappe_code.sh
+      - ../../initial-setup-service/populate_frappe_code.sh:/populate_frappe_code.sh
 
   configurator-service-test:
     <<: *frappe-image-network-defaults
@@ -47,7 +47,7 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bash /scripts/configurator_setup.sh;
+        bash /run/configurator_setup.sh;
         echo "✅ Container commands executed";
     environment:
       ENV: -test
@@ -57,7 +57,7 @@ services:
       REDIS_QUEUE: redis-queue-service-test:6379
       SOCKETIO_PORT: "9000"
     volumes:
-      - ./configurator-service/configurator_setup.sh:/scripts/configurator_setup.sh
+      - ../../configurator-service/configurator_setup.sh:/run/configurator_setup.sh
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-env-data-test:/home/frappe/frappe-bench/env
@@ -74,9 +74,9 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bash /scripts/create_site_setup.sh;
-        bash /scripts/auto_setup_wizard.sh;
-        bash /scripts/install_apps.sh erp-test.growatt.app '[
+        bash /run/create_site_setup.sh;
+        bash /run/auto_setup_wizard.sh;
+        bash /run/install_apps.sh erp-test.growatt.app '[
           {"name": "frappe_comment_agt", "url": "https://github.com/AnyGridTech/frappe_comment_agt"},
           {"name": "frappe_agt", "url": "https://github.com/AnyGridTech/frappe_agt"},
           {"name": "frappe_growatt_plant", "url": "https://github.com/AnyGridTech/frappe_growatt_plant"},
@@ -89,9 +89,9 @@ services:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-env-data-test:/home/frappe/frappe-bench/env
       - services-logs-data-test:/home/frappe/frappe-bench/logs
-      - ./create-site-service/auto_setup_wizard.sh:/scripts/auto_setup_wizard.sh
-      - ./create-site-service/install_apps.sh:/scripts/install_apps.sh
-      - ./create-site-service/create_site_setup.sh:/scripts/create_site_setup.sh
+      - ../../create-site-service/auto_setup_wizard.sh:/run/auto_setup_wizard.sh
+      - ../../create-site-service/install_apps.sh:/run/install_apps.sh
+      - ../../create-site-service/create_site_setup.sh:/run/create_site_setup.sh
     environment:
       ENV: -test
       SITE_NAME: erp-test.growatt.app
@@ -109,7 +109,7 @@ services:
     entrypoint: [bash, -c]
     command:
       - >
-        bash /scripts/start_frontend.sh;
+        bash /run/start_frontend.sh;
     environment:
       SITE_NAME: erp-test.growatt.app
       BACKEND: backend-service-test:8000
@@ -125,7 +125,7 @@ services:
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-env-data-test:/home/frappe/frappe-bench/env
       - services-logs-data-test:/home/frappe/frappe-bench/logs
-      - ./frontend-service/start_frontend.sh:/scripts/start_frontend.sh
+      - ../../frontend-service/start_frontend.sh:/run/start_frontend.sh
 
   backend-service-test:
     <<: *frappe-defaults
@@ -136,9 +136,9 @@ services:
     entrypoint: [bash, -c]
     command: 
       - >
-        bash /scripts/start_backend.sh;
+        bash /run/start_backend.sh;
     volumes:
-      - ./backend-service/start_backend.sh:/scripts/start_backend.sh
+      - ../../backend-service/start_backend.sh:/run/start_backend.sh
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-env-data-test:/home/frappe/frappe-bench/env
