@@ -38,4 +38,8 @@ echo "Generated common_site_config.json:"
 cat "$BENCH_DIR/sites/common_site_config.json"
 echo ""
 
+echo "🔧 Setting up Python requirements for Frappe and ERPNext..."
+retry 3 2 "bench setup requirements"
+echo "✅ Python requirements installed successfully"
+
 echo "Finished configurator_setup.sh"

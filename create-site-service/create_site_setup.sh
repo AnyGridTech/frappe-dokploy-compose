@@ -34,6 +34,16 @@ do
 done
 
 echo "sites/common_site_config.json found"
+
+echo "🔧 Ensuring Python requirements are installed..."
+if ! python -m frappe.utils.bench_helper >/dev/null 2>&1; then
+  echo "⚠️ Frappe module not found in Python environment, running bench setup requirements..."
+  bench setup requirements
+  echo "✅ Python requirements installed successfully"
+else
+  echo "✅ Frappe module already available"
+fi
+
 echo "Creating new site named $SITE_NAME..."
 echo "Using MySQL root username: $MYSQL_ROOT_USERNAME"
 echo "Using MySQL root password: ${MYSQL_ROOT_PASSWORD:0:3}********"

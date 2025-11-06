@@ -75,10 +75,7 @@ echo "$APPS_JSON" | jq -c '.[]' | while read -r app; do
   install_app "$name" "$url" "$branch"
 done
 
-echo "🔧 Setting up Python and Node requirements..."
-bench setup requirements
-
-echo "🔄 Clearing cache..."
+echo " Clearing cache..."
 bench --site "$SITE_NAME" clear-cache
 bench --site "$SITE_NAME" clear-website-cache
 
