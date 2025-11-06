@@ -4,11 +4,13 @@
 # bash ./install_apps.sh your-site-name.com '[
 #   {
 #     "name": "app1",
-#     "url": "https://github.com/app1_repo.git"
+#     "url": "https://github.com/app1_repo.git",
+#     "branch": "develop"
 #   },
 #   {
 #     "name": "app2",
-#     "url": "https://github.com/app2_repo.git"
+#     "url": "https://github.com/app2_repo.git",
+#     "branch": "main"
 #   }
 # ]';
 set -e
@@ -37,30 +39,41 @@ fi
 install_app() {
   local app_name=$1
   local repo_url=$2
+  local branch=$3
+
+  echo "📦 Installing app: $app_name"
+  echo "🌐 Repo URL: ${repo_url:-<none>}"
+  echo "🌿 Branch: ${branch:-<default>}"
+  echo ""
+
+  cd "$BENCH_DIR" || exit 1
 
   if [ ! -d "$APPS_DIR/$app_name" ]; then
     echo "🔄 Getting app $app_name..."
-    bench get-app "$app_name" "$repo_url"
+
+    if [ -z "$repo_url" ]; then
+      bench get-app "$app_name"
+    elif [ -z "$branch" ]; then
+      bench get-app "$app_name" "$repo_url"
+    else
+      bench get-app "$app_name" "$repo_url" --branch "$branch"
+    fi
   else
     echo "✅ App $app_name already exists, skipping get-app."
+    echo "✅ Building app $app_name..."
+    bench build --app "$app_name"
   fi
 
-  if grep -q "^$app_name$" "$SITE_APPS_FILE"; then
-    echo "✅ App $app_name already listed in sites/apps.txt, skipping installation."
-  else
-    echo "✅ Installing app $app_name on site $SITE_NAME..."
-    bench --site "$SITE_NAME" install-app "$app_name"
-  fi
-
-  echo "✅ Building app $app_name..."
-  bench build --app "$app_name"
+  echo "✅ Installing app $app_name on site $SITE_NAME..."
+  bench --site "$SITE_NAME" install-app "$app_name"
 }
 
 # loop over array of {name, url}
 echo "$APPS_JSON" | jq -c '.[]' | while read -r app; do
   name=$(echo "$app" | jq -r '.name')
   url=$(echo "$app" | jq -r '.url')
-  install_app "$name" "$url"
+  branch=$(echo "$app" | jq -r '.branch // empty')
+  install_app "$name" "$url" "$branch"
 done
 
 echo "🔧 Setting up Python and Node requirements..."
