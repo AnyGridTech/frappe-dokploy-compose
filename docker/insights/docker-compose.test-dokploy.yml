@@ -1,0 +1,65 @@
+# ./docker-compose.test-dokploy.yml - Frappe Insights Test Dokploy Setup
+
+services:
+  mariadb-test:
+    image: mariadb:10.8
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mariadb-test-data:/var/lib/mysql
+    networks:
+      - insights-test-network
+    healthcheck:
+      test: mysqladmin ping -h localhost --password=$$MYSQL_ROOT_PASSWORD
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis-test:
+    image: redis:alpine
+    networks:
+      - insights-test-network
+    restart: unless-stopped
+
+  frappe-test:
+    image: frappe/bench:latest
+    command: bash /workspace/init.sh
+    environment:
+      - SHELL=/bin/bash
+      - SITE_NAME=bi-test.growatt.app
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MARIADB_HOST=mariadb-test
+      - REDIS_HOST=redis-test
+    working_dir: /home/frappe
+    volumes:
+      - ./init.sh:/workspace/init.sh:ro
+      - ../../create-site-service/auto_setup_wizard.sh:/workspace/auto_setup_wizard.sh:ro
+      - bench-test-data:/workspace/frappe-bench
+    ports:
+      - "8001:8000"
+      - "9001:9000"
+    networks:
+      - insights-test-network
+      - dokploy-network
+    depends_on:
+      mariadb-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  mariadb-test-data:
+  bench-test-data:
+
+networks:
+  insights-test-network:
+    driver: bridge
+  dokploy-network:
+    external: true

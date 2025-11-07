@@ -1,0 +1,65 @@
+# Frappe Insights Production Dokploy Setup
+
+services:
+  mariadb-prod:
+    image: mariadb:10.8
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mariadb-prod-data:/var/lib/mysql
+    networks:
+      - insights-prod-network
+    healthcheck:
+      test: mysqladmin ping -h localhost --password=$$MYSQL_ROOT_PASSWORD
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis-prod:
+    image: redis:alpine
+    networks:
+      - insights-prod-network
+    restart: unless-stopped
+
+  frappe-prod:
+    image: frappe/bench:latest
+    command: bash /workspace/init.sh
+    environment:
+      - SHELL=/bin/bash
+      - SITE_NAME=bi-prod.growatt.app
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MARIADB_HOST=mariadb-prod
+      - REDIS_HOST=redis-prod
+    working_dir: /home/frappe
+    volumes:
+      - ./init.sh:/workspace/init.sh:ro
+      - ../../create-site-service/auto_setup_wizard.sh:/workspace/auto_setup_wizard.sh:ro
+      - bench-prod-data:/workspace/frappe-bench
+    ports:
+      - "8002:8000"
+      - "9002:9000"
+    networks:
+      - insights-prod-network
+      - dokploy-network
+    depends_on:
+      mariadb-prod:
+        condition: service_healthy
+      redis-prod:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  mariadb-prod-data:
+  bench-prod-data:
+
+networks:
+  insights-prod-network:
+    driver: bridge
+  dokploy-network:
+    external: true

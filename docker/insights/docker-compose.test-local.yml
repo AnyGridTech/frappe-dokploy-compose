@@ -1,0 +1,57 @@
+# ./docker-compose.test-local.yml - Frappe Insights Local Test Setup
+
+services:
+  mariadb:
+    image: mariadb:10.8
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme123!}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    networks:
+      - insights-network
+    healthcheck:
+      test: mysqladmin ping -h localhost --password=$$MYSQL_ROOT_PASSWORD
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    networks:
+      - insights-network
+
+  frappe:
+    image: frappe/bench:latest
+    command: bash /workspace/init.sh
+    environment:
+      - SHELL=/bin/bash
+      - SITE_NAME=bi-test.growatt.app
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-changeme123!}
+    working_dir: /home/frappe
+    volumes:
+      - ./init.sh:/workspace/init.sh:ro
+      - ../../create-site-service/auto_setup_wizard.sh:/workspace/auto_setup_wizard.sh:ro
+      - bench-data:/workspace/frappe-bench
+    ports:
+      - "8000:8000"
+      - "9000:9000"
+    networks:
+      - insights-network
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  mariadb-data:
+  bench-data:
+
+networks:
+  insights-network:
+    driver: bridge
