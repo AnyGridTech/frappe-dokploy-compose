@@ -36,6 +36,7 @@ services:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MARIADB_HOST=mariadb-prod
       - REDIS_HOST=redis-prod
+      - PRODUCTION=true
     working_dir: /home/frappe
     volumes:
       - ./init.sh:/workspace/init.sh:ro

@@ -5,12 +5,25 @@ SITE_NAME="${SITE_NAME:-bi-test.growatt.app}"
 ADMIN_PASSWORD="${MYSQL_ROOT_PASSWORD:-changeme123!}"
 MARIADB_HOST="${MARIADB_HOST:-mariadb}"
 REDIS_HOST="${REDIS_HOST:-redis}"
+PRODUCTION="${PRODUCTION:-false}"
 
 # Check if bench is fully initialized
 if [ -f "/home/frappe/frappe-bench/sites/${SITE_NAME}/site_config.json" ]; then
     echo "✅ Bench and site already exist, starting..."
     cd /home/frappe/frappe-bench
-    bench start
+    
+    if [ "$PRODUCTION" = "true" ]; then
+        echo "🚀 Starting in PRODUCTION mode..."
+        # Start services individually for production
+        bench --site ${SITE_NAME} serve --port 8000 --noreload &
+        bench --site ${SITE_NAME} worker --queue short,default,long &
+        bench --site ${SITE_NAME} schedule &
+        node socketio.js &
+        wait
+    else
+        echo "🔧 Starting in DEVELOPMENT mode..."
+        bench start
+    fi
     exit 0
 fi
 
@@ -65,4 +78,16 @@ bench --site ${SITE_NAME} clear-cache
 bench use ${SITE_NAME}
 
 echo "✅ Setup complete! Starting bench..."
-bench start
+
+if [ "$PRODUCTION" = "true" ]; then
+    echo "🚀 Starting in PRODUCTION mode..."
+    # Start services individually for production
+    bench --site ${SITE_NAME} serve --port 8000 --noreload &
+    bench --site ${SITE_NAME} worker --queue short,default,long &
+    bench --site ${SITE_NAME} schedule &
+    node socketio.js &
+    wait
+else
+    echo "🔧 Starting in DEVELOPMENT mode..."
+    bench start
+fi
