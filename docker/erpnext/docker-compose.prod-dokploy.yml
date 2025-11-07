@@ -77,11 +77,11 @@ services:
         bash /run/create_site_setup.sh;
         bash /run/auto_setup_wizard.sh;
         bash /run/install_apps.sh erp-prod.growatt.app '[
-          {"name": "frappe_comment_agt", "url": "https://github.com/AnyGridTech/frappe_comment_agt", "branch": "develop"},
-          {"name": "frappe_agt", "url": "https://github.com/AnyGridTech/frappe_agt", "branch": "develop"},
-          {"name": "frappe_growatt_plant", "url": "https://github.com/AnyGridTech/frappe_growatt_plant", "branch": "develop"},
-          {"name": "frappe_it_request", "url": "https://github.com/AnyGridTech/frappe_it_request", "branch": "develop"},
-          {"name": "frappe_workflow_history", "url": "https://github.com/AnyGridTech/frappe_workflow_history", "branch": "develop"}
+          {"name": "frappe_comment_agt", "url": "https://github.com/AnyGridTech/frappe_comment_agt", "branch": "main"},
+          {"name": "frappe_agt", "url": "https://github.com/AnyGridTech/frappe_agt", "branch": "main"},
+          {"name": "frappe_growatt_plant", "url": "https://github.com/AnyGridTech/frappe_growatt_plant", "branch": "main"},
+          {"name": "frappe_it_request", "url": "https://github.com/AnyGridTech/frappe_it_request", "branch": "main"},
+          {"name": "frappe_workflow_history", "url": "https://github.com/AnyGridTech/frappe_workflow_history", "branch": "main"}
         ]';
         echo "✅ Container commands executed";
     volumes:
