@@ -35,7 +35,6 @@ services:
     working_dir: /home/frappe
     volumes:
       - ./init.sh:/workspace/init.sh:ro
-      - ../../create-site-service/auto_setup_wizard.sh:/workspace/auto_setup_wizard.sh:ro
       - bench-data:/workspace/frappe-bench
     ports:
       - "8000:8000"

@@ -64,13 +64,5 @@ bench --site ${SITE_NAME} clear-cache
 
 bench use ${SITE_NAME}
 
-echo "🎯 Running auto setup wizard..."
-# Call the existing auto_setup_wizard script
-if [ -f "/workspace/auto_setup_wizard.sh" ]; then
-    bash /workspace/auto_setup_wizard.sh
-else
-    echo "⚠️  auto_setup_wizard.sh not found, skipping setup wizard automation"
-fi
-
 echo "✅ Setup complete! Starting bench..."
 bench start
