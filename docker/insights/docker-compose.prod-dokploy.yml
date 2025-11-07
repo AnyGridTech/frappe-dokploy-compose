@@ -32,7 +32,7 @@ services:
     command: bash /workspace/init.sh
     environment:
       - SHELL=/bin/bash
-      - SITE_NAME=bi-prod.growatt.app
+      - SITE_NAME=bi.growatt.app
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MARIADB_HOST=mariadb-prod
       - REDIS_HOST=redis-prod

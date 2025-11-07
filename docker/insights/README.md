@@ -57,7 +57,7 @@ docker-compose -f docker-compose.test-dokploy.yml up -d
 
 ### 3. docker-compose.prod-dokploy.yml
 **Purpose:** Dokploy production deployment  
-**Site Name:** `bi-prod.growatt.app`  
+**Site Name:** `bi.growatt.app`  
 **Ports:**
 - Frontend: `http://localhost:8002`
 - WebSocket: `http://localhost:9002`
