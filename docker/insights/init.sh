@@ -14,11 +14,32 @@ if [ -f "/home/frappe/frappe-bench/sites/${SITE_NAME}/site_config.json" ]; then
     
     if [ "$PRODUCTION" = "true" ]; then
         echo "🚀 Starting in PRODUCTION mode..."
-        # Start services individually for production
-        bench --site ${SITE_NAME} serve --port 8000 --noreload &
+        
+        # Calculate optimal workers based on CPU cores
+        CPU_CORES=$(nproc --all || echo 1)
+        WORKERS=$(( 2 * CPU_CORES + 1 ))
+        THREADS=4
+        
+        echo "🖥️  Detected $CPU_CORES CPU cores"
+        echo "⚙️  Starting with $WORKERS gunicorn workers and $THREADS threads per worker"
+        
+        # Start all services in background
+        /home/frappe/frappe-bench/env/bin/gunicorn \
+          --chdir=/home/frappe/frappe-bench/sites \
+          --bind=0.0.0.0:8000 \
+          --threads=$THREADS \
+          --workers=$WORKERS \
+          --worker-class=gthread \
+          --worker-tmp-dir=/dev/shm \
+          --timeout=120 \
+          --preload \
+          frappe.app:application &
+        
         bench --site ${SITE_NAME} worker --queue short,default,long &
         bench --site ${SITE_NAME} schedule &
-        node socketio.js &
+        node apps/frappe/socketio.js &
+        
+        echo "✅ All services started"
         wait
     else
         echo "🔧 Starting in DEVELOPMENT mode..."
@@ -81,11 +102,32 @@ echo "✅ Setup complete! Starting bench..."
 
 if [ "$PRODUCTION" = "true" ]; then
     echo "🚀 Starting in PRODUCTION mode..."
-    # Start services individually for production
-    bench --site ${SITE_NAME} serve --port 8000 --noreload &
+    
+    # Calculate optimal workers based on CPU cores
+    CPU_CORES=$(nproc --all || echo 1)
+    WORKERS=$(( 2 * CPU_CORES + 1 ))
+    THREADS=4
+    
+    echo "🖥️  Detected $CPU_CORES CPU cores"
+    echo "⚙️  Starting with $WORKERS gunicorn workers and $THREADS threads per worker"
+    
+    # Start all services in background
+    /home/frappe/frappe-bench/env/bin/gunicorn \
+      --chdir=/home/frappe/frappe-bench/sites \
+      --bind=0.0.0.0:8000 \
+      --threads=$THREADS \
+      --workers=$WORKERS \
+      --worker-class=gthread \
+      --worker-tmp-dir=/dev/shm \
+      --timeout=120 \
+      --preload \
+      frappe.app:application &
+    
     bench --site ${SITE_NAME} worker --queue short,default,long &
     bench --site ${SITE_NAME} schedule &
-    node socketio.js &
+    node apps/frappe/socketio.js &
+    
+    echo "✅ All services started"
     wait
 else
     echo "🔧 Starting in DEVELOPMENT mode..."
