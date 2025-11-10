@@ -72,3 +72,9 @@ fi
 # --- BENCH SETUP REQUIREMENTS WORKAROUND END ---
 
 populate_frappe_code
+
+echo "Fixing permissions..."
+# The volume is mounted at /mnt in this specific container
+chown -R 1000:1000 /mnt
+
+echo "✅ Population complete."

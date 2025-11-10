@@ -1,5 +1,6 @@
 # ./docker-compose.test.yml
 # From ./frappe-dokploy-compose
+#remove all: docker-compose -f ./docker/erpnext/docker-compose.test-local.yml -f ./docker/erpnext/docker-compose.override.test-local.yml --env-file ./docker/erpnext/.env down -v
 #docker-compose -f ./docker/erpnext/docker-compose.test-local.yml -f ./docker/erpnext/docker-compose.override.test-local.yml --env-file ./docker/erpnext/.env up -d
 # --- YAML Anchors / Extensions ---
 x-frappe-image-network-defaults: &frappe-image-network-defaults
@@ -78,22 +79,18 @@ services:
       - >
         bash /run/create_site_setup.sh;
         bash /run/auto_setup_wizard.sh;
-        bash /run/install_apps.sh erp-test.growatt.app '[
-          {"name": "frappe_comment_agt", "url": "https://github.com/AnyGridTech/frappe_comment_agt", "branch": "develop"},
-          {"name": "frappe_agt", "url": "https://github.com/AnyGridTech/frappe_agt", "branch": "develop"},
-          {"name": "frappe_growatt_plant", "url": "https://github.com/AnyGridTech/frappe_growatt_plant", "branch": "develop"},
-          {"name": "frappe_it_request", "url": "https://github.com/AnyGridTech/frappe_it_request", "branch": "develop"},
-          {"name": "frappe_workflow_history", "url": "https://github.com/AnyGridTech/frappe_workflow_history", "branch": "develop"}
-        ]';
+        bash /run/install_apps.sh erp-test.growatt.app /run/apps.json;
         echo "✅ Container commands executed";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-assets-data-test:/home/frappe/frappe-bench/sites/assets
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-env-data-test:/home/frappe/frappe-bench/env
       - services-logs-data-test:/home/frappe/frappe-bench/logs
       - ../../create-site-service/auto_setup_wizard.sh:/run/auto_setup_wizard.sh
       - ../../create-site-service/install_apps.sh:/run/install_apps.sh
       - ../../create-site-service/create_site_setup.sh:/run/create_site_setup.sh
+      - ../../create-site-service/apps.json:/run/apps.json
     environment:
       ENV: -test
       SITE_NAME: erp-test.growatt.app
@@ -124,6 +121,7 @@ services:
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-assets-data-test:/home/frappe/frappe-bench/sites/assets
       - frappe-env-data-test:/home/frappe/frappe-bench/env
       - services-logs-data-test:/home/frappe/frappe-bench/logs
       - ../../frontend-service/start_frontend.sh:/run/start_frontend.sh
@@ -271,6 +269,7 @@ volumes:
   frappe-db-data-test:
   frappe-redis-queue-data-test:
   frappe-redis-cache-data-test:
+  frappe-assets-data-test: {}
 
 networks:
   frappe-network-test:
