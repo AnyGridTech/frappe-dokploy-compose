@@ -95,16 +95,8 @@ done
 echo "🔄 Running migrations for all apps..."
 bench --site "$SITE_NAME" migrate
 
-echo "🏗️ Building production assets..."
-bench build
-
-echo "⚙️ Generating Nginx config..."
-bench setup nginx --yes
-
 echo "🧹 Clearing cache..."
 bench --site "$SITE_NAME" clear-cache
 bench --site "$SITE_NAME" clear-website-cache
-
-# REMOVED 'bench restart' as it's not needed in this Docker setup
 
 echo "✅ All apps installed successfully."

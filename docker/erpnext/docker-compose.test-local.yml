@@ -96,7 +96,26 @@ services:
       SITE_NAME: erp-test.growatt.app
       MYSQL_ROOT_USERNAME: root
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-
+  backend-service-test:
+    <<: *frappe-defaults
+    depends_on:
+      create-site-service-test:
+        condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
+    entrypoint: [bash, -c]
+    command: 
+      - >
+        bash /run/start_backend.sh;
+    volumes:
+      - ../../backend-service/start_backend.sh:/run/start_backend.sh
+      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-env-data-test:/home/frappe/frappe-bench/env
+      - services-logs-data-test:/home/frappe/frappe-bench/logs
+    environment:
+      DB_HOST: db-service-test
+      DB_PORT: "3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
   frontend-service-test:
     <<: *frappe-defaults
     networks:
@@ -126,26 +145,7 @@ services:
       - services-logs-data-test:/home/frappe/frappe-bench/logs
       - ../../frontend-service/start_frontend.sh:/run/start_frontend.sh
 
-  backend-service-test:
-    <<: *frappe-defaults
-    depends_on:
-      create-site-service-test:
-        condition: service_completed_successfully
-    working_dir: /home/frappe/frappe-bench
-    entrypoint: [bash, -c]
-    command: 
-      - >
-        bash /run/start_backend.sh;
-    volumes:
-      - ../../backend-service/start_backend.sh:/run/start_backend.sh
-      - frappe-sites-data-test:/home/frappe/frappe-bench/sites
-      - frappe-code-data-test:/home/frappe/frappe-bench/apps
-      - frappe-env-data-test:/home/frappe/frappe-bench/env
-      - services-logs-data-test:/home/frappe/frappe-bench/logs
-    environment:
-      DB_HOST: db-service-test
-      DB_PORT: "3306"
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
     
   queue-long-service-test:
     <<: *frappe-defaults

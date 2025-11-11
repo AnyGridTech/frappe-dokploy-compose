@@ -35,3 +35,9 @@ echo "⚙️  Configuring gunicorn with $WORKERS workers and $THREADS threads pe
   --timeout=120 \
   --preload \
   frappe.app:application
+
+echo "🏗️ Building production assets..."
+bench build --verbose
+
+echo "⚙️ Generating Nginx config for frontend..."
+bench setup nginx --yes
