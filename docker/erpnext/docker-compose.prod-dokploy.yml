@@ -104,7 +104,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=dokploy-network"
       # 2. The External URL
-      - "traefik.http.routers.frappe-prod-http.rule=Host(`erp-luigi.growatt.app`)"
+      - "traefik.http.routers.frappe-prod-http.rule=Host(`${EXTERNAL_DOMAIN}`)"
       - "traefik.http.routers.frappe-prod-http.entrypoints=websecure"
       - "traefik.http.routers.frappe-prod-http.tls.certresolver=letsencrypt"
       - "traefik.http.services.frappe-prod-http.loadbalancer.server.port=8080"
