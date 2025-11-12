@@ -76,22 +76,18 @@ services:
       - >
         bash /run/create_site_setup.sh;
         bash /run/auto_setup_wizard.sh;
-        bash /run/install_apps.sh erp-test.growatt.app '[
-          {"name": "frappe_comment_agt", "url": "https://github.com/AnyGridTech/frappe_comment_agt", "branch": "develop"},
-          {"name": "frappe_agt", "url": "https://github.com/AnyGridTech/frappe_agt", "branch": "develop"},
-          {"name": "frappe_growatt_plant", "url": "https://github.com/AnyGridTech/frappe_growatt_plant", "branch": "develop"},
-          {"name": "frappe_it_request", "url": "https://github.com/AnyGridTech/frappe_it_request", "branch": "develop"},
-          {"name": "frappe_workflow_history", "url": "https://github.com/AnyGridTech/frappe_workflow_history", "branch": "develop"}
-        ]';
+        bash /run/install_apps.sh erp-test.growatt.app /run/apps-test.json;
         echo "✅ Container commands executed";
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
+      - frappe-assets-data-test:/home/frappe/frappe-bench/sites/assets
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
       - frappe-env-data-test:/home/frappe/frappe-bench/env
       - services-logs-data-test:/home/frappe/frappe-bench/logs
       - ../../create-site-service/auto_setup_wizard.sh:/run/auto_setup_wizard.sh
       - ../../create-site-service/install_apps.sh:/run/install_apps.sh
       - ../../create-site-service/create_site_setup.sh:/run/create_site_setup.sh
+      - ../../create-site-service/apps-test.json:/run/apps-test.json
     environment:
       ENV: -test
       SITE_NAME: erp-test.growatt.app
@@ -103,6 +99,18 @@ services:
     networks:
       - frappe-network-test
       - dokploy-network
+    labels:
+      # 1. Enable Traefik
+      - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-network"
+      # 2. The External URL
+      - "traefik.http.routers.frappe-test-http.rule=Host(`${EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.frappe-test-http.entrypoints=websecure"
+      - "traefik.http.routers.frappe-test-http.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frappe-test-http.loadbalancer.server.port=8080"
+      - "traefik.http.routers.frappe-test-http.middlewares=frappe-host-rewrite"
+      # Define the middleware: Change Host header to the internal site name
+      - "traefik.http.middlewares.frappe-host-rewrite.headers.customrequestheaders.Host=erp-test.growatt.app"
     depends_on:
       create-site-service-test:
         condition: service_completed_successfully
@@ -123,6 +131,7 @@ services:
     volumes:
       - frappe-sites-data-test:/home/frappe/frappe-bench/sites
       - frappe-code-data-test:/home/frappe/frappe-bench/apps
+      - frappe-assets-data-test:/home/frappe/frappe-bench/sites/assets
       - frappe-env-data-test:/home/frappe/frappe-bench/env
       - services-logs-data-test:/home/frappe/frappe-bench/logs
       - ../../frontend-service/start_frontend.sh:/run/start_frontend.sh
@@ -265,53 +274,13 @@ services:
 
 volumes:
   services-logs-data-test:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-test/frappe-bench/logs
-      o: bind
-
   frappe-code-data-test:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-test/frappe-bench/apps
-      o: bind,mode=0777
-
   frappe-sites-data-test:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-test/frappe-bench/sites
-      o: bind
-  
   frappe-env-data-test:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-test/frappe-bench/env
-      o: bind
-
   frappe-db-data-test:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-test/maria-db/data
-      o: bind
-
   frappe-redis-queue-data-test:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-test/redis-queue/data
-      o: bind
-
   frappe-redis-cache-data-test:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-test/redis-cache/data
-      o: bind
+  frappe-assets-data-test: {}
 
 networks:
   frappe-network-test:
