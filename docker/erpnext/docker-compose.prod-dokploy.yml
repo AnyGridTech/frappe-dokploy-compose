@@ -76,7 +76,7 @@ services:
       - >
         bash /run/create_site_setup.sh;
         bash /run/auto_setup_wizard.sh;
-        bash /run/install_apps.sh erp-prod.growatt.app /run/apps.json;
+        bash /run/install_apps.sh erp-prod.growatt.app /run/apps-prod.json;
         echo "✅ Container commands executed";
     volumes:
       - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
@@ -87,7 +87,7 @@ services:
       - ../../create-site-service/auto_setup_wizard.sh:/run/auto_setup_wizard.sh
       - ../../create-site-service/install_apps.sh:/run/install_apps.sh
       - ../../create-site-service/create_site_setup.sh:/run/create_site_setup.sh
-      - ../../create-site-service/apps.json:/run/apps.json
+      - ../../create-site-service/apps-prod.json:/run/apps-prod.json
     environment:
       ENV: -prod
       SITE_NAME: erp-prod.growatt.app
