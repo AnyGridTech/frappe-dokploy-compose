@@ -252,6 +252,15 @@ services:
     networks:
       - frappe-network-prod
       - dokploy-network
+    labels:
+      # Enable Traefik for phpMyAdmin
+      - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-network"
+      # External URL for phpMyAdmin
+      - "traefik.http.routers.phpmyadmin-prod-http.rule=Host(`${DB_EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.phpmyadmin-prod-http.entrypoints=websecure"
+      - "traefik.http.routers.phpmyadmin-prod-http.tls.certresolver=letsencrypt"
+      - "traefik.http.services.phpmyadmin-prod-http.loadbalancer.server.port=80"
     environment:
       PMA_HOST: db-service-prod
       PMA_PORT: 3306

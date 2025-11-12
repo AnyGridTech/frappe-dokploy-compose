@@ -1,7 +1,6 @@
-# ./docker-compose.test.yml
-# From ./frappe-dokploy-compose
-#remove all: docker-compose -f ./docker/erpnext/docker-compose.test-local.yml -f ./docker/erpnext/docker-compose.override.test-local.yml --env-file ./docker/erpnext/.env down -v
-#docker-compose -f ./docker/erpnext/docker-compose.test-local.yml -f ./docker/erpnext/docker-compose.override.test-local.yml --env-file ./docker/erpnext/.env up -d
+# remove all: docker-compose -f ./docker/erpnext/docker-compose.test-local.yml -f ./docker/erpnext/docker-compose.override.test-local.yml --env-file ./docker/erpnext/.env down -v
+# docker-compose -f ./docker/erpnext/docker-compose.test-local.yml -f ./docker/erpnext/docker-compose.override.test-local.yml --env-file ./docker/erpnext/.env up -d
+
 # --- YAML Anchors / Extensions ---
 x-frappe-image-network-defaults: &frappe-image-network-defaults
   image: frappe/erpnext:v15
@@ -145,8 +144,6 @@ services:
       - services-logs-data-test:/home/frappe/frappe-bench/logs
       - ../../frontend-service/start_frontend.sh:/run/start_frontend.sh
 
-
-    
   queue-long-service-test:
     <<: *frappe-defaults
     depends_on:
