@@ -99,6 +99,18 @@ services:
     networks:
       - frappe-network-prod
       - dokploy-network
+    labels:
+      # 1. Enable Traefik
+      - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-network"
+      # 2. The External URL
+      - "traefik.http.routers.frappe-prod-http.rule=Host(`${EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.frappe-prod-http.entrypoints=websecure"
+      - "traefik.http.routers.frappe-prod-http.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frappe-prod-http.loadbalancer.server.port=8080"
+      - "traefik.http.routers.frappe-prod-http.middlewares=frappe-host-rewrite"
+      # Define the middleware: Change Host header to the internal site name
+      - "traefik.http.middlewares.frappe-host-rewrite.headers.customrequestheaders.Host=erp-prod.growatt.app"
     depends_on:
       create-site-service-prod:
         condition: service_completed_successfully
