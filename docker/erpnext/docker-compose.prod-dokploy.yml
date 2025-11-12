@@ -76,22 +76,18 @@ services:
       - >
         bash /run/create_site_setup.sh;
         bash /run/auto_setup_wizard.sh;
-        bash /run/install_apps.sh erp-prod.growatt.app '[
-          {"name": "frappe_comment_agt", "url": "https://github.com/AnyGridTech/frappe_comment_agt", "branch": "main"},
-          {"name": "frappe_agt", "url": "https://github.com/AnyGridTech/frappe_agt", "branch": "main"},
-          {"name": "frappe_growatt_plant", "url": "https://github.com/AnyGridTech/frappe_growatt_plant", "branch": "main"},
-          {"name": "frappe_it_request", "url": "https://github.com/AnyGridTech/frappe_it_request", "branch": "main"},
-          {"name": "frappe_workflow_history", "url": "https://github.com/AnyGridTech/frappe_workflow_history", "branch": "main"}
-        ]';
+        bash /run/install_apps.sh erp-prod.growatt.app /run/apps-prod.json;
         echo "✅ Container commands executed";
     volumes:
       - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
+      - frappe-assets-data-prod:/home/frappe/frappe-bench/sites/assets
       - frappe-code-data-prod:/home/frappe/frappe-bench/apps
       - frappe-env-data-prod:/home/frappe/frappe-bench/env
       - services-logs-data-prod:/home/frappe/frappe-bench/logs
       - ../../create-site-service/auto_setup_wizard.sh:/run/auto_setup_wizard.sh
       - ../../create-site-service/install_apps.sh:/run/install_apps.sh
       - ../../create-site-service/create_site_setup.sh:/run/create_site_setup.sh
+      - ../../create-site-service/apps-prod.json:/run/apps-prod.json
     environment:
       ENV: -prod
       SITE_NAME: erp-prod.growatt.app
@@ -123,6 +119,7 @@ services:
     volumes:
       - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
       - frappe-code-data-prod:/home/frappe/frappe-bench/apps
+      - frappe-assets-data-prod:/home/frappe/frappe-bench/sites/assets
       - frappe-env-data-prod:/home/frappe/frappe-bench/env
       - services-logs-data-prod:/home/frappe/frappe-bench/logs
       - ../../frontend-service/start_frontend.sh:/run/start_frontend.sh
@@ -265,53 +262,13 @@ services:
 
 volumes:
   services-logs-data-prod:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-prod/frappe-bench/logs
-      o: bind
-
   frappe-code-data-prod:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-prod/frappe-bench/apps
-      o: bind,mode=0777
-
   frappe-sites-data-prod:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-prod/frappe-bench/sites
-      o: bind
-  
   frappe-env-data-prod:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-prod/frappe-bench/env
-      o: bind
-
   frappe-db-data-prod:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-prod/maria-db/data
-      o: bind
-
   frappe-redis-queue-data-prod:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-prod/redis-queue/data
-      o: bind
-
   frappe-redis-cache-data-prod:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/frappe-prod/redis-cache/data
-      o: bind
+  frappe-assets-data-prod: {}
 
 networks:
   frappe-network-prod:
