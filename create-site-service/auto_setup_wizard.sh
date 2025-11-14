@@ -21,7 +21,7 @@ KWARGS=$(jq -n \
   --arg password "$MYSQL_ROOT_PASSWORD" \
   --arg company_name "Growatt" \
   --arg company_abbr "GRT" \
-  --arg chart_of_accounts "Brazil - Chart of Accounts" \
+  --arg chart_of_accounts "Standard" \
   --arg fy_start_date "$FY_START" \
   --arg fy_end_date "$FY_END" \
   --argjson setup_demo 0 \
