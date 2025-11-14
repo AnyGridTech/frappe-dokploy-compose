@@ -46,17 +46,48 @@ KWARGS=$(jq -n \
 echo "KWARGS (senha oculta):"
 echo "$KWARGS" | jq '.args.password = "**********"'
 
-# Check if company already exists
-echo "Checking if company 'Growatt' exists..."
-COMPANY_EXISTS=$(bench --site "${SITE_NAME}" execute frappe.client.get_value --args "['Company', 'Growatt', 'name']" 2>/dev/null || echo "null")
+# Check if setup wizard has been completed
+echo "Checking setup status..."
+SETUP_COMPLETE=$(bench --site "${SITE_NAME}" execute frappe.client.get_value --args "['System Settings', 'System Settings', 'setup_complete']" 2>/dev/null || echo "0")
 
-if [ "$COMPANY_EXISTS" = "null" ] || [ -z "$COMPANY_EXISTS" ]; then
-    echo "Company does not exist. Running setup wizard..."
+echo "Setup complete status: $SETUP_COMPLETE"
+
+if [ "$SETUP_COMPLETE" = "1" ]; then
+    echo "⚠️ Setup wizard was already completed previously."
+    
+    # Check if company exists
+    echo "Checking if company 'Growatt' exists..."
+    COMPANY_EXISTS=$(bench --site "${SITE_NAME}" execute frappe.client.get_value --args "['Company', 'Growatt', 'name']" 2>/dev/null || echo "null")
+    
+    if [ "$COMPANY_EXISTS" = "null" ] || [ -z "$COMPANY_EXISTS" ]; then
+        echo "⚠️ Company does not exist even though setup was completed. Creating company manually..."
+        
+        # Create company directly
+        bench --site "${SITE_NAME}" execute frappe.client.insert --args "{
+            'doctype': 'Company',
+            'company_name': 'Growatt',
+            'abbr': 'GRT',
+            'default_currency': 'BRL',
+            'country': 'Brazil'
+        }"
+        
+        echo "✅ Company 'Growatt' created successfully"
+        
+        # Set global defaults
+        echo "Setting global defaults..."
+        bench --site "${SITE_NAME}" execute frappe.client.set_value --args "['System Settings', 'System Settings', {'country': 'Brazil'}]"
+        
+        bench --site "${SITE_NAME}" execute frappe.db.set_default --args "['Company', 'Growatt']"
+        bench --site "${SITE_NAME}" execute frappe.db.set_default --args "['currency', 'BRL']"
+        
+        echo "✅ Global defaults set: Company='Growatt', Currency='BRL'"
+    else
+        echo "✅ Company 'Growatt' already exists: $COMPANY_EXISTS"
+    fi
+else
+    echo "Running setup wizard for the first time..."
     bench --site "${SITE_NAME}" execute frappe.desk.page.setup_wizard.setup_wizard.setup_complete --kwargs "${KWARGS}"
     echo "✅ Setup wizard completed successfully"
-else
-    echo "⚠️ Company 'Growatt' already exists. Skipping setup wizard."
-    echo "Company found: $COMPANY_EXISTS"
 fi
 
 echo "Finished auto_setup_wizard.sh"
