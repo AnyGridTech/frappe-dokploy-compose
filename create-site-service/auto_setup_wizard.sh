@@ -65,20 +65,54 @@ if [ "$COMPANY_EXISTS" = "null" ] || [ -z "$COMPANY_EXISTS" ]; then
         if [ "$COMPANY_EXISTS" = "null" ] || [ -z "$COMPANY_EXISTS" ]; then
             echo "⚠️ Setup wizard didn't create the company. Creating company manually..."
             
-            # Create company directly using frappe.get_doc
-            bench --site "${SITE_NAME}" execute frappe.get_doc --args "{'doctype': 'Company', 'company_name': 'Growatt', 'abbr': 'GRT', 'default_currency': 'BRL', 'country': 'Brazil'}.insert()"
+            # Create company using Python code
+            bench --site "${SITE_NAME}" console <<EOF
+import frappe
+try:
+    doc = frappe.get_doc({
+        'doctype': 'Company',
+        'company_name': 'Growatt',
+        'abbr': 'GRT',
+        'default_currency': 'BRL',
+        'country': 'Brazil'
+    })
+    doc.insert()
+    frappe.db.commit()
+    print("Company created successfully")
+except frappe.exceptions.DuplicateEntryError:
+    print("Company already exists")
+except Exception as e:
+    print(f"Error: {e}")
+EOF
             
-            echo "✅ Company 'Growatt' created successfully"
+            echo "✅ Company 'Growatt' ensured"
         else
             echo "✅ Company 'Growatt' was created by setup wizard"
         fi
     else
         echo "⚠️ Setup wizard failed or already completed. Creating company manually..."
         
-        # Create company directly using frappe.get_doc
-        bench --site "${SITE_NAME}" execute frappe.get_doc --args "{'doctype': 'Company', 'company_name': 'Growatt', 'abbr': 'GRT', 'default_currency': 'BRL', 'country': 'Brazil'}.insert()"
+        # Create company using Python code
+        bench --site "${SITE_NAME}" console <<EOF
+import frappe
+try:
+    doc = frappe.get_doc({
+        'doctype': 'Company',
+        'company_name': 'Growatt',
+        'abbr': 'GRT',
+        'default_currency': 'BRL',
+        'country': 'Brazil'
+    })
+    doc.insert()
+    frappe.db.commit()
+    print("Company created successfully")
+except frappe.exceptions.DuplicateEntryError:
+    print("Company already exists")
+except Exception as e:
+    print(f"Error: {e}")
+EOF
         
-        echo "✅ Company 'Growatt' created successfully"
+        echo "✅ Company 'Growatt' ensured"
     fi
     
     # Set global defaults
