@@ -46,7 +46,17 @@ KWARGS=$(jq -n \
 echo "KWARGS (senha oculta):"
 echo "$KWARGS" | jq '.args.password = "**********"'
 
-echo "Submitting Setup Wizard Data on site ${SITE_NAME}..."
-bench --site "${SITE_NAME}" execute frappe.desk.page.setup_wizard.setup_wizard.setup_complete --kwargs "${KWARGS}" || true
+# Check if company already exists
+echo "Checking if company 'Growatt' exists..."
+COMPANY_EXISTS=$(bench --site "${SITE_NAME}" execute frappe.client.get_value --args "['Company', 'Growatt', 'name']" 2>/dev/null || echo "null")
+
+if [ "$COMPANY_EXISTS" = "null" ] || [ -z "$COMPANY_EXISTS" ]; then
+    echo "Company does not exist. Running setup wizard..."
+    bench --site "${SITE_NAME}" execute frappe.desk.page.setup_wizard.setup_wizard.setup_complete --kwargs "${KWARGS}"
+    echo "✅ Setup wizard completed successfully"
+else
+    echo "⚠️ Company 'Growatt' already exists. Skipping setup wizard."
+    echo "Company found: $COMPANY_EXISTS"
+fi
 
 echo "Finished auto_setup_wizard.sh"
