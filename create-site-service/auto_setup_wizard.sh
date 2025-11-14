@@ -65,9 +65,11 @@ if [ "$COMPANY_EXISTS" = "null" ] || [ -z "$COMPANY_EXISTS" ]; then
         if [ "$COMPANY_EXISTS" = "null" ] || [ -z "$COMPANY_EXISTS" ]; then
             echo "⚠️ Setup wizard didn't create the company. Creating company manually..."
             
-            # Create company using Python code
-            bench --site "${SITE_NAME}" console <<EOF
+            # Create company using Python code (non-interactive)
+            python3 -c "
 import frappe
+frappe.init(site='${SITE_NAME}')
+frappe.connect()
 try:
     doc = frappe.get_doc({
         'doctype': 'Company',
@@ -78,12 +80,14 @@ try:
     })
     doc.insert()
     frappe.db.commit()
-    print("Company created successfully")
+    print('Company created successfully')
 except frappe.exceptions.DuplicateEntryError:
-    print("Company already exists")
+    print('Company already exists')
 except Exception as e:
-    print(f"Error: {e}")
-EOF
+    print(f'Error: {e}')
+finally:
+    frappe.destroy()
+"
             
             echo "✅ Company 'Growatt' ensured"
         else
@@ -92,9 +96,11 @@ EOF
     else
         echo "⚠️ Setup wizard failed or already completed. Creating company manually..."
         
-        # Create company using Python code
-        bench --site "${SITE_NAME}" console <<EOF
+        # Create company using Python code (non-interactive)
+        python3 -c "
 import frappe
+frappe.init(site='${SITE_NAME}')
+frappe.connect()
 try:
     doc = frappe.get_doc({
         'doctype': 'Company',
@@ -105,12 +111,14 @@ try:
     })
     doc.insert()
     frappe.db.commit()
-    print("Company created successfully")
+    print('Company created successfully')
 except frappe.exceptions.DuplicateEntryError:
-    print("Company already exists")
+    print('Company already exists')
 except Exception as e:
-    print(f"Error: {e}")
-EOF
+    print(f'Error: {e}')
+finally:
+    frappe.destroy()
+"
         
         echo "✅ Company 'Growatt' ensured"
     fi
