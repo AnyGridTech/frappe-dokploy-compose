@@ -65,14 +65,8 @@ if [ "$COMPANY_EXISTS" = "null" ] || [ -z "$COMPANY_EXISTS" ]; then
         if [ "$COMPANY_EXISTS" = "null" ] || [ -z "$COMPANY_EXISTS" ]; then
             echo "⚠️ Setup wizard didn't create the company. Creating company manually..."
             
-            # Create company directly
-            bench --site "${SITE_NAME}" execute frappe.client.insert --args "{
-                'doctype': 'Company',
-                'company_name': 'Growatt',
-                'abbr': 'GRT',
-                'default_currency': 'BRL',
-                'country': 'Brazil'
-            }"
+            # Create company directly using frappe.get_doc
+            bench --site "${SITE_NAME}" execute frappe.get_doc --args "{'doctype': 'Company', 'company_name': 'Growatt', 'abbr': 'GRT', 'default_currency': 'BRL', 'country': 'Brazil'}.insert()"
             
             echo "✅ Company 'Growatt' created successfully"
         else
@@ -81,14 +75,8 @@ if [ "$COMPANY_EXISTS" = "null" ] || [ -z "$COMPANY_EXISTS" ]; then
     else
         echo "⚠️ Setup wizard failed or already completed. Creating company manually..."
         
-        # Create company directly
-        bench --site "${SITE_NAME}" execute frappe.client.insert --args "{
-            'doctype': 'Company',
-            'company_name': 'Growatt',
-            'abbr': 'GRT',
-            'default_currency': 'BRL',
-            'country': 'Brazil'
-        }"
+        # Create company directly using frappe.get_doc
+        bench --site "${SITE_NAME}" execute frappe.get_doc --args "{'doctype': 'Company', 'company_name': 'Growatt', 'abbr': 'GRT', 'default_currency': 'BRL', 'country': 'Brazil'}.insert()"
         
         echo "✅ Company 'Growatt' created successfully"
     fi
