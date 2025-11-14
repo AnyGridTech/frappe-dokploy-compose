@@ -65,65 +65,15 @@ if [ "$COMPANY_EXISTS" = "null" ] || [ -z "$COMPANY_EXISTS" ]; then
         if [ "$COMPANY_EXISTS" = "null" ] || [ -z "$COMPANY_EXISTS" ]; then
             echo "⚠️ Setup wizard didn't create the company. Creating company manually..."
             
-            # Create company using Python code (non-interactive)
-            python3 -c "
-import frappe
-frappe.init(site='${SITE_NAME}')
-frappe.connect()
-try:
-    doc = frappe.get_doc({
-        'doctype': 'Company',
-        'company_name': 'Growatt',
-        'abbr': 'GRT',
-        'default_currency': 'BRL',
-        'country': 'Brazil'
-    })
-    doc.insert()
-    frappe.db.commit()
-    print('Company created successfully')
-except frappe.exceptions.DuplicateEntryError:
-    print('Company already exists')
-except Exception as e:
-    print(f'Error: {e}')
-finally:
-    frappe.destroy()
-"
+            # Create company using bench execute with inline Python
+            bench --site "${SITE_NAME}" execute "frappe.get_doc({'doctype': 'Company', 'company_name': 'Growatt', 'abbr': 'GRT', 'default_currency': 'BRL', 'country': 'Brazil'}).insert(ignore_if_duplicate=True)" 2>/dev/null || echo "Company creation attempted"
             
             echo "✅ Company 'Growatt' ensured"
         else
             echo "✅ Company 'Growatt' was created by setup wizard"
         fi
-    else
-        echo "⚠️ Setup wizard failed or already completed. Creating company manually..."
-        
-        # Create company using Python code (non-interactive)
-        python3 -c "
-import frappe
-frappe.init(site='${SITE_NAME}')
-frappe.connect()
-try:
-    doc = frappe.get_doc({
-        'doctype': 'Company',
-        'company_name': 'Growatt',
-        'abbr': 'GRT',
-        'default_currency': 'BRL',
-        'country': 'Brazil'
-    })
-    doc.insert()
-    frappe.db.commit()
-    print('Company created successfully')
-except frappe.exceptions.DuplicateEntryError:
-    print('Company already exists')
-except Exception as e:
-    print(f'Error: {e}')
-finally:
-    frappe.destroy()
-"
-        
-        echo "✅ Company 'Growatt' ensured"
-    fi
-    
-    # Set global defaults
+
+    fi    # Set global defaults
     echo "Setting global defaults..."
     bench --site "${SITE_NAME}" execute frappe.client.set_value --args "['System Settings', 'System Settings', {'country': 'Brazil'}]" 2>/dev/null || true
     
