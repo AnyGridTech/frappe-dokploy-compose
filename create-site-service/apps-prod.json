@@ -23,5 +23,10 @@
     "name": "frappe_workflow_history",
     "url": "https://github.com/AnyGridTech/frappe_workflow_history",
     "branch": "main"
+  },
+  {
+    "name": "frappe_growatt_serial_no_workflow",
+    "url": "https://github.com/AnyGridTech/frappe_growatt_serial_no_workflow",
+    "branch": "main"
   }
 ]
