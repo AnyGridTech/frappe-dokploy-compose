@@ -28,5 +28,20 @@
     "name": "frappe_growatt_serial_no_workflow",
     "url": "https://github.com/AnyGridTech/frappe_growatt_serial_no_workflow",
     "branch": "main"
+  },
+  {
+    "name": "frappe_growatt_ticket",
+    "url": "https://github.com/AnyGridTech/frappe_growatt_ticket",
+    "branch": "main"
+  },
+  {
+    "name": "frappe_growatt_checklists",
+    "url": "https://github.com/AnyGridTech/frappe_growatt_checklists",
+    "branch": "main"
+  },
+  {
+    "name": "frappe_growatt_compliance_statement",
+    "url": "https://github.com/AnyGridTech/frappe_growatt_compliance_statement",
+    "branch": "main"
   }
 ]
