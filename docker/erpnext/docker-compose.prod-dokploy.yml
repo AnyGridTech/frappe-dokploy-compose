@@ -105,20 +105,18 @@ services:
     networks:
       - frappe-network
       - dokploy-network
-    ports:
-      - "${FRONTEND_PORT:-8080}:8080"
     labels:
       # 1. Enable Traefik
       - "traefik.enable=true"
       - "traefik.docker.network=dokploy-network"
       # 2. The External URL
-      - "traefik.http.routers.frappe-frontend.rule=Host(`${SITE_EXTERNAL_DOMAIN}`)"
-      - "traefik.http.routers.frappe-frontend.entrypoints=websecure"
-      - "traefik.http.routers.frappe-frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.frappe-frontend.loadbalancer.server.port=8080"
-      - "traefik.http.routers.frappe-frontend.middlewares=frappe-host-rewrite"
+      - "traefik.http.routers.frappe-${INSTANCE_ID}.rule=Host(`${SITE_EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.frappe-${INSTANCE_ID}.entrypoints=websecure"
+      - "traefik.http.routers.frappe-${INSTANCE_ID}.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frappe-${INSTANCE_ID}.loadbalancer.server.port=8080"
+      - "traefik.http.routers.frappe-${INSTANCE_ID}.middlewares=frappe-rewrite-${INSTANCE_ID}"
       # Define the middleware: Change Host header to the internal site name
-      - "traefik.http.middlewares.frappe-host-rewrite.headers.customrequestheaders.Host=${SITE_EXTERNAL_DOMAIN}"
+      - "traefik.http.middlewares.frappe-rewrite-${INSTANCE_ID}.headers.customrequestheaders.Host=${SITE_EXTERNAL_DOMAIN}"
     depends_on:
       create-site-service:
         condition: service_completed_successfully
@@ -265,10 +263,10 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=dokploy-network"
       # External URL for phpMyAdmin
-      - "traefik.http.routers.phpmyadmin-prod.rule=Host(`${DB_EXTERNAL_DOMAIN}`)"
-      - "traefik.http.routers.phpmyadmin-prod.entrypoints=websecure"
-      - "traefik.http.routers.phpmyadmin-prod.tls.certresolver=letsencrypt"
-      - "traefik.http.services.phpmyadmin-prod.loadbalancer.server.port=80"
+      - "traefik.http.routers.phpmyadmin-${INSTANCE_ID}.rule=Host(`${DB_EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.phpmyadmin-${INSTANCE_ID}.entrypoints=websecure"
+      - "traefik.http.routers.phpmyadmin-${INSTANCE_ID}.tls.certresolver=letsencrypt"
+      - "traefik.http.services.phpmyadmin-${INSTANCE_ID}.loadbalancer.server.port=80"
     environment:
       PMA_HOST: db-service
       PMA_PORT: ${DB_PORT:-3306}
