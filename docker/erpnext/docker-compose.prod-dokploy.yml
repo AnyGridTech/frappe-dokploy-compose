@@ -229,7 +229,7 @@ services:
   db-service:
     image: mariadb:10.6
     networks:
-      - frappe-network-prod
+      - frappe-network
     deploy:
       restart_policy:
         condition: on-failure
@@ -256,7 +256,7 @@ services:
       db-service:
         condition: service_healthy
     networks:
-      - frappe-network-${SITE_EXTERNAL_DOMAIN}
+      - frappe-network
       - dokploy-network
     labels:
       # Enable Traefik for phpMyAdmin
