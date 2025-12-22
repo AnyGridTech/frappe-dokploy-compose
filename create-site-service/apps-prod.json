@@ -43,5 +43,10 @@
     "name": "frappe_growatt_compliance_statement",
     "url": "https://github.com/AnyGridTech/frappe_growatt_compliance_statement",
     "branch": "main"
-  }
+  },
+  {
+    "name": "frappe_growatt_issue_codes",
+    "url": "https://github.com/AnyGridTech/frappe_growatt_issue_codes",
+    "branch": "main"
+  },
 ]
