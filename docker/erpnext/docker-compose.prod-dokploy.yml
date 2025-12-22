@@ -1,7 +1,15 @@
+# Docker Compose Configuration for ERPNext Production Deployment
+# 
+# Multi-Instance Isolation Strategy:
+# - Service names, volumes, and networks are STATIC (no variable interpolation in keys)
+# - Isolation is achieved through Docker Compose project names (e.g., `-p instance-name`)
+# - Each Dokploy deployment uses a unique project name automatically
+# - Environment variables like SITE_EXTERNAL_DOMAIN are used in VALUES only
+#
 x-frappe-image-network-defaults: &frappe-image-network-defaults
   image: frappe/erpnext:v15
   networks:
-    - frappe-network-${SITE_EXTERNAL_DOMAIN}
+    - frappe-network
 
 x-frappe-service-defaults: &frappe-defaults
   <<: *frappe-image-network-defaults
@@ -12,14 +20,14 @@ x-frappe-service-defaults: &frappe-defaults
 x-redis-defaults: &redis-defaults
   image: redis:6.2-alpine
   networks:
-    - frappe-network-${SITE_EXTERNAL_DOMAIN}
+    - frappe-network
   deploy:
     restart_policy:
       condition: on-failure
 
 # --- Services --- #
 services:
-  initial-setup-${SITE_EXTERNAL_DOMAIN}:
+  initial-setup:
     <<: *frappe-defaults
     user: "0:0"
     deploy:
@@ -31,13 +39,13 @@ services:
         bash /populate_frappe_code.sh;
         echo "✅ Container commands executed";
     volumes:
-      - frappe-code-data-${SITE_EXTERNAL_DOMAIN}:/mnt
+      - frappe-code-data:/mnt
       - ../../initial-setup-service/populate_frappe_code.sh:/populate_frappe_code.sh
 
-  configurator-service-${SITE_EXTERNAL_DOMAIN}:
+  configurator-service:
     <<: *frappe-image-network-defaults
     depends_on:
-      initial-setup-${SITE_EXTERNAL_DOMAIN}:
+      initial-setup:
         condition: service_completed_successfully
     deploy:
       restart_policy:
@@ -49,22 +57,22 @@ services:
         echo "✅ Container commands executed";
     environment:
       ENV: -prod
-      DB_HOST: db-service-${SITE_EXTERNAL_DOMAIN}
+      DB_HOST: db-service
       DB_PORT: "3306"
-      REDIS_CACHE: redis-cache-service-${SITE_EXTERNAL_DOMAIN}:6379
-      REDIS_QUEUE: redis-queue-service-${SITE_EXTERNAL_DOMAIN}:6379
+      REDIS_CACHE: redis-cache-service:6379
+      REDIS_QUEUE: redis-queue-service:6379
       SOCKETIO_PORT: "9000"
     volumes:
       - ../../configurator-service/configurator_setup.sh:/run/configurator_setup.sh
-      - frappe-sites-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/sites
-      - frappe-code-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/apps
-      - frappe-env-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/env
-      - services-logs-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/logs
+      - frappe-sites-data:/home/frappe/frappe-bench/sites
+      - frappe-code-data:/home/frappe/frappe-bench/apps
+      - frappe-env-data:/home/frappe/frappe-bench/env
+      - services-logs-data:/home/frappe/frappe-bench/logs
 
-  create-site-service-${SITE_EXTERNAL_DOMAIN}:
+  create-site-service:
     <<: *frappe-image-network-defaults
     depends_on:
-      configurator-service-${SITE_EXTERNAL_DOMAIN}:
+      configurator-service:
         condition: service_completed_successfully
     deploy:
       restart_policy:
@@ -77,11 +85,11 @@ services:
         bash /run/install_apps.sh ${SITE_EXTERNAL_DOMAIN} /run/apps-prod.json;
         echo "✅ Container commands executed";
     volumes:
-      - frappe-sites-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/sites
-      - frappe-assets-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/sites/assets
-      - frappe-code-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/apps
-      - frappe-env-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/env
-      - services-logs-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/logs
+      - frappe-sites-data:/home/frappe/frappe-bench/sites
+      - frappe-assets-data:/home/frappe/frappe-bench/sites/assets
+      - frappe-code-data:/home/frappe/frappe-bench/apps
+      - frappe-env-data:/home/frappe/frappe-bench/env
+      - services-logs-data:/home/frappe/frappe-bench/logs
       - ../../create-site-service/auto_setup_wizard.sh:/run/auto_setup_wizard.sh
       - ../../create-site-service/install_apps.sh:/run/install_apps.sh
       - ../../create-site-service/create_site_setup.sh:/run/create_site_setup.sh
@@ -92,10 +100,10 @@ services:
       MYSQL_ROOT_USERNAME: root
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
-  frontend-service-${SITE_EXTERNAL_DOMAIN}:
+  frontend-service:
     <<: *frappe-defaults
     networks:
-      - frappe-network-${SITE_EXTERNAL_DOMAIN}
+      - frappe-network
       - dokploy-network
     labels:
       # 1. Enable Traefik
@@ -110,7 +118,7 @@ services:
       # Define the middleware: Change Host header to the internal site name
       - "traefik.http.middlewares.frappe-host-rewrite-${SITE_EXTERNAL_DOMAIN}.headers.customrequestheaders.Host=${SITE_EXTERNAL_DOMAIN}"
     depends_on:
-      create-site-service-${SITE_EXTERNAL_DOMAIN}:
+      create-site-service:
         condition: service_completed_successfully
     entrypoint: [bash, -c]
     command:
@@ -118,26 +126,26 @@ services:
         bash /run/start_frontend.sh;
     environment:
       SITE_NAME: ${SITE_EXTERNAL_DOMAIN}
-      BACKEND: backend-service-${SITE_EXTERNAL_DOMAIN}:8000
+      BACKEND: backend-service:8000
       FRAPPE_SITE_NAME_HEADER: ${SITE_EXTERNAL_DOMAIN}
-      SOCKETIO: websocket-service-${SITE_EXTERNAL_DOMAIN}:9000
+      SOCKETIO: websocket-service:9000
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
       UPSTREAM_REAL_IP_RECURSIVE: "off"
       PROXY_READ_TIMEOUT: 120
       CLIENT_MAX_BODY_SIZE: 50m
     volumes:
-      - frappe-sites-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/sites
-      - frappe-code-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/apps
-      - frappe-assets-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/sites/assets
-      - frappe-env-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/env
-      - services-logs-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/logs
+      - frappe-sites-data:/home/frappe/frappe-bench/sites
+      - frappe-code-data:/home/frappe/frappe-bench/apps
+      - frappe-assets-data:/home/frappe/frappe-bench/sites/assets
+      - frappe-env-data:/home/frappe/frappe-bench/env
+      - services-logs-data:/home/frappe/frappe-bench/logs
       - ../../frontend-service/start_frontend.sh:/run/start_frontend.sh
 
-  backend-service-${SITE_EXTERNAL_DOMAIN}:
+  backend-service:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-${SITE_EXTERNAL_DOMAIN}:
+      create-site-service:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -146,19 +154,19 @@ services:
         bash /run/start_backend.sh;
     volumes:
       - ../../backend-service/start_backend.sh:/run/start_backend.sh
-      - frappe-sites-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/sites
-      - frappe-code-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/apps
-      - frappe-env-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/env
-      - services-logs-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/logs
+      - frappe-sites-data:/home/frappe/frappe-bench/sites
+      - frappe-code-data:/home/frappe/frappe-bench/apps
+      - frappe-env-data:/home/frappe/frappe-bench/env
+      - services-logs-data:/home/frappe/frappe-bench/logs
     environment:
-      DB_HOST: db-service-${SITE_EXTERNAL_DOMAIN}
+      DB_HOST: db-service
       DB_PORT: "3306"
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     
-  queue-long-service-${SITE_EXTERNAL_DOMAIN}:
+  queue-long-service:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-${SITE_EXTERNAL_DOMAIN}:
+      create-site-service:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -166,15 +174,15 @@ services:
       - >
         bench worker --queue "long,default,short";
     volumes:
-      - frappe-sites-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/sites
-      - frappe-code-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/apps
-      - frappe-env-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/env
-      - services-logs-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/logs
+      - frappe-sites-data:/home/frappe/frappe-bench/sites
+      - frappe-code-data:/home/frappe/frappe-bench/apps
+      - frappe-env-data:/home/frappe/frappe-bench/env
+      - services-logs-data:/home/frappe/frappe-bench/logs
 
-  queue-short-service-${SITE_EXTERNAL_DOMAIN}:
+  queue-short-service:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-${SITE_EXTERNAL_DOMAIN}:
+      create-site-service:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -182,15 +190,15 @@ services:
       - >
         bench worker --queue "default,short";
     volumes:
-      - frappe-sites-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/sites
-      - frappe-code-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/apps
-      - frappe-env-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/env
-      - services-logs-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/logs
+      - frappe-sites-data:/home/frappe/frappe-bench/sites
+      - frappe-code-data:/home/frappe/frappe-bench/apps
+      - frappe-env-data:/home/frappe/frappe-bench/env
+      - services-logs-data:/home/frappe/frappe-bench/logs
 
-  scheduler-service-${SITE_EXTERNAL_DOMAIN}:
+  scheduler-service:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-${SITE_EXTERNAL_DOMAIN}:
+      create-site-service:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -198,15 +206,15 @@ services:
       - >
         bench schedule;
     volumes:
-      - frappe-sites-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/sites
-      - frappe-code-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/apps
-      - frappe-env-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/env
-      - services-logs-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/logs
+      - frappe-sites-data:/home/frappe/frappe-bench/sites
+      - frappe-code-data:/home/frappe/frappe-bench/apps
+      - frappe-env-data:/home/frappe/frappe-bench/env
+      - services-logs-data:/home/frappe/frappe-bench/logs
 
-  websocket-service-${SITE_EXTERNAL_DOMAIN}:
+  websocket-service:
     <<: *frappe-defaults
     depends_on:
-      create-site-service-${SITE_EXTERNAL_DOMAIN}:
+      create-site-service:
         condition: service_completed_successfully
     working_dir: /home/frappe/frappe-bench
     entrypoint: [bash, -c]
@@ -214,11 +222,11 @@ services:
       - >
         node /home/frappe/frappe-bench/apps/frappe/socketio.js;
     volumes:
-      - frappe-sites-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/sites
-      - services-logs-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/logs
-      - frappe-code-data-${SITE_EXTERNAL_DOMAIN}:/home/frappe/frappe-bench/apps
+      - frappe-sites-data:/home/frappe/frappe-bench/sites
+      - services-logs-data:/home/frappe/frappe-bench/logs
+      - frappe-code-data:/home/frappe/frappe-bench/apps
 
-  db-service-${SITE_EXTERNAL_DOMAIN}:
+  db-service:
     image: mariadb:10.6
     networks:
       - frappe-network-prod
@@ -240,12 +248,12 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
-      - frappe-db-data-${SITE_EXTERNAL_DOMAIN}:/var/lib/mysql
+      - frappe-db-data:/var/lib/mysql
 
-  phpmyadmin-service-${SITE_EXTERNAL_DOMAIN}:
+  phpmyadmin-service:
     image: phpmyadmin/phpmyadmin
     depends_on:
-      db-service-${SITE_EXTERNAL_DOMAIN}:
+      db-service:
         condition: service_healthy
     networks:
       - frappe-network-${SITE_EXTERNAL_DOMAIN}
@@ -255,42 +263,42 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=dokploy-network"
       # External URL for phpMyAdmin
-      - "traefik.http.routers.phpmyadmin-${SITE_EXTERNAL_DOMAIN}.rule=Host(`${DB_EXTERNAL_DOMAIN}`)"
-      - "traefik.http.routers.phpmyadmin-${SITE_EXTERNAL_DOMAIN}.entrypoints=websecure"
-      - "traefik.http.routers.phpmyadmin-${SITE_EXTERNAL_DOMAIN}.tls.certresolver=letsencrypt"
-      - "traefik.http.services.phpmyadmin-${SITE_EXTERNAL_DOMAIN}.loadbalancer.server.port=80"
+      - "traefik.http.routers.phpmyadmin-prod.rule=Host(`${DB_EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.phpmyadmin-prod.entrypoints=websecure"
+      - "traefik.http.routers.phpmyadmin-prod.tls.certresolver=letsencrypt"
+      - "traefik.http.services.phpmyadmin-prod.loadbalancer.server.port=80"
     environment:
-      PMA_HOST: db-service-${SITE_EXTERNAL_DOMAIN}
+      PMA_HOST: db-service
       PMA_PORT: 3306
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       UPLOAD_LIMIT: 500M
       MAX_EXECUTION_TIME: 600
       MEMORY_LIMIT: 512M
     links:
-      - db-service-${SITE_EXTERNAL_DOMAIN} 
+      - db-service 
 
-  redis-queue-service-${SITE_EXTERNAL_DOMAIN}:
+  redis-queue-service:
     <<: *redis-defaults
     volumes:
-      - frappe-redis-queue-data-${SITE_EXTERNAL_DOMAIN}:/data
+      - frappe-redis-queue-data:/data
 
-  redis-cache-service-${SITE_EXTERNAL_DOMAIN}:
+  redis-cache-service:
     <<: *redis-defaults
     volumes:
-      - frappe-redis-cache-data-${SITE_EXTERNAL_DOMAIN}:/data
+      - frappe-redis-cache-data:/data
 
 volumes:
-  services-logs-data-${SITE_EXTERNAL_DOMAIN}:
-  frappe-code-data-${SITE_EXTERNAL_DOMAIN}:
-  frappe-sites-data-${SITE_EXTERNAL_DOMAIN}:
-  frappe-env-data-${SITE_EXTERNAL_DOMAIN}:
-  frappe-db-data-${SITE_EXTERNAL_DOMAIN}:
-  frappe-redis-queue-data-${SITE_EXTERNAL_DOMAIN}:
-  frappe-redis-cache-data-${SITE_EXTERNAL_DOMAIN}:
-  frappe-assets-data-${SITE_EXTERNAL_DOMAIN}: {}
+  services-logs-data:
+  frappe-code-data:
+  frappe-sites-data:
+  frappe-env-data:
+  frappe-db-data:
+  frappe-redis-queue-data:
+  frappe-redis-cache-data:
+  frappe-assets-data: {}
 
 networks:
-  frappe-network-${SITE_EXTERNAL_DOMAIN}:
+  frappe-network:
     driver: bridge
   dokploy-network:
     external: true
