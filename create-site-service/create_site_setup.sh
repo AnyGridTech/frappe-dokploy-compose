@@ -13,9 +13,9 @@ if bench --site "$SITE_NAME" list-apps >/dev/null 2>&1; then
   exit 0
 fi
 
-wait-for-it -t 15 db-service"$ENV":3306
-wait-for-it -t 15 redis-cache-service"$ENV":6379
-wait-for-it -t 15 redis-queue-service"$ENV":6379
+wait-for-it -t 15 db-service:3306
+wait-for-it -t 15 redis-cache-service:6379
+wait-for-it -t 15 redis-queue-service:6379
 
 start=$(date +%s)
 max_wait_time=10  # 10 seconds

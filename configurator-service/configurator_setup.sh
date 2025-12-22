@@ -16,9 +16,9 @@ retry() {
   return 1
 }
 
-wait-for-it -t 120 db-service"$ENV":3306
-wait-for-it -t 120 redis-cache-service"$ENV":6379
-wait-for-it -t 120 redis-queue-service"$ENV":6379
+wait-for-it -t 120 db-service:3306
+wait-for-it -t 120 redis-cache-service:6379
+wait-for-it -t 120 redis-queue-service:6379
 
 echo "Creating sites/apps.txt"
 retry 3 2 "ls -1 apps > sites/apps.txt"
