@@ -13,9 +13,9 @@ if bench --site "$SITE_NAME" list-apps >/dev/null 2>&1; then
   exit 0
 fi
 
-wait-for-it -t 15 db-service"$ENV":3306
-wait-for-it -t 15 redis-cache-service"$ENV":6379
-wait-for-it -t 15 redis-queue-service"$ENV":6379
+wait-for-it -t 15 db-service:3306
+wait-for-it -t 15 redis-cache-service:6379
+wait-for-it -t 15 redis-queue-service:6379
 
 start=$(date +%s)
 max_wait_time=10  # 10 seconds
@@ -54,3 +54,21 @@ bench new-site --mariadb-user-host-login-scope='%' \
   --db-root-password=${MYSQL_ROOT_PASSWORD} \
   --install-app erpnext \
   --set-default ${SITE_NAME}
+
+echo "✅ Site created successfully"
+
+# Ensure the site is set as default in the sites directory
+BENCH_DIR="/home/frappe/frappe-bench"
+echo "${SITE_NAME}" > "${BENCH_DIR}/sites/currentsite.txt"
+
+echo "📝 Current site set to: ${SITE_NAME}"
+echo "Contents of currentsite.txt:"
+cat "${BENCH_DIR}/sites/currentsite.txt"
+
+# Also verify site directory exists
+if [ -d "${BENCH_DIR}/sites/${SITE_NAME}" ]; then
+  echo "✅ Site directory exists: ${BENCH_DIR}/sites/${SITE_NAME}"
+  ls -la "${BENCH_DIR}/sites/${SITE_NAME}" | head -10
+else
+  echo "⚠️ Site directory not found: ${BENCH_DIR}/sites/${SITE_NAME}"
+fi
