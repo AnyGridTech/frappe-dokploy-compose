@@ -57,9 +57,18 @@ bench new-site --mariadb-user-host-login-scope='%' \
 
 echo "✅ Site created successfully"
 
-# Ensure the site is set as default
-echo "${SITE_NAME}" > sites/currentsite.txt
+# Ensure the site is set as default in the sites directory
+BENCH_DIR="/home/frappe/frappe-bench"
+echo "${SITE_NAME}" > "${BENCH_DIR}/sites/currentsite.txt"
 
 echo "📝 Current site set to: ${SITE_NAME}"
 echo "Contents of currentsite.txt:"
-cat sites/currentsite.txt
+cat "${BENCH_DIR}/sites/currentsite.txt"
+
+# Also verify site directory exists
+if [ -d "${BENCH_DIR}/sites/${SITE_NAME}" ]; then
+  echo "✅ Site directory exists: ${BENCH_DIR}/sites/${SITE_NAME}"
+  ls -la "${BENCH_DIR}/sites/${SITE_NAME}" | head -10
+else
+  echo "⚠️ Site directory not found: ${BENCH_DIR}/sites/${SITE_NAME}"
+fi
