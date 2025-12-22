@@ -58,10 +58,10 @@ services:
     environment:
       ENV: -prod
       DB_HOST: db-service
-      DB_PORT: "3306"
-      REDIS_CACHE: redis-cache-service:6379
-      REDIS_QUEUE: redis-queue-service:6379
-      SOCKETIO_PORT: "9000"
+      DB_PORT: "${DB_PORT:-3306}"
+      REDIS_CACHE: redis-cache-service:${REDIS_CACHE_PORT:-6379}
+      REDIS_QUEUE: redis-queue-service:${REDIS_QUEUE_PORT:-6379}
+      SOCKETIO_PORT: "${SOCKETIO_PORT:-9000}"
     volumes:
       - ../../configurator-service/configurator_setup.sh:/run/configurator_setup.sh
       - frappe-sites-data:/home/frappe/frappe-bench/sites
@@ -113,7 +113,7 @@ services:
       - "traefik.http.routers.frappe-prod-${SITE_EXTERNAL_DOMAIN}.rule=Host(`${SITE_EXTERNAL_DOMAIN}`)"
       - "traefik.http.routers.frappe-prod-${SITE_EXTERNAL_DOMAIN}.entrypoints=websecure"
       - "traefik.http.routers.frappe-prod-${SITE_EXTERNAL_DOMAIN}.tls.certresolver=letsencrypt"
-      - "traefik.http.services.frappe-prod-${SITE_EXTERNAL_DOMAIN}.loadbalancer.server.port=8080"
+      - "traefik.http.services.frappe-prod-${SITE_EXTERNAL_DOMAIN}.loadbalancer.server.port=${FRONTEND_PORT:-8080}"
       - "traefik.http.routers.frappe-prod-${SITE_EXTERNAL_DOMAIN}.middlewares=frappe-host-rewrite-${SITE_EXTERNAL_DOMAIN}"
       # Define the middleware: Change Host header to the internal site name
       - "traefik.http.middlewares.frappe-host-rewrite-${SITE_EXTERNAL_DOMAIN}.headers.customrequestheaders.Host=${SITE_EXTERNAL_DOMAIN}"
@@ -126,9 +126,9 @@ services:
         bash /run/start_frontend.sh;
     environment:
       SITE_NAME: ${SITE_EXTERNAL_DOMAIN}
-      BACKEND: backend-service:8000
+      BACKEND: backend-service:${BACKEND_PORT:-8000}
       FRAPPE_SITE_NAME_HEADER: ${SITE_EXTERNAL_DOMAIN}
-      SOCKETIO: websocket-service:9000
+      SOCKETIO: websocket-service:${SOCKETIO_PORT:-9000}
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
       UPSTREAM_REAL_IP_RECURSIVE: "off"
@@ -160,7 +160,7 @@ services:
       - services-logs-data:/home/frappe/frappe-bench/logs
     environment:
       DB_HOST: db-service
-      DB_PORT: "3306"
+      DB_PORT: "${DB_PORT:-3306}"
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     
   queue-long-service:
@@ -269,7 +269,7 @@ services:
       - "traefik.http.services.phpmyadmin-prod.loadbalancer.server.port=80"
     environment:
       PMA_HOST: db-service
-      PMA_PORT: 3306
+      PMA_PORT: ${DB_PORT:-3306}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       UPLOAD_LIMIT: 500M
       MAX_EXECUTION_TIME: 600
