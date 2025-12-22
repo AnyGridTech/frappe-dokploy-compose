@@ -74,7 +74,7 @@ services:
       - >
         bash /run/create_site_setup.sh;
         bash /run/auto_setup_wizard.sh;
-        bash /run/install_apps.sh erp-prod.growatt.app /run/apps-prod.json;
+        bash /run/install_apps.sh ${SITE_EXTERNAL_DOMAIN} /run/apps-prod.json;
         echo "✅ Container commands executed";
     volumes:
       - frappe-sites-data-prod:/home/frappe/frappe-bench/sites
@@ -88,7 +88,7 @@ services:
       - ../../create-site-service/apps-prod.json:/run/apps-prod.json
     environment:
       ENV: -prod
-      SITE_NAME: erp-prod.growatt.app
+      SITE_NAME: ${SITE_EXTERNAL_DOMAIN}
       MYSQL_ROOT_USERNAME: root
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
@@ -108,7 +108,7 @@ services:
       - "traefik.http.services.frappe-prod-http.loadbalancer.server.port=8080"
       - "traefik.http.routers.frappe-prod-http.middlewares=frappe-host-rewrite"
       # Define the middleware: Change Host header to the internal site name
-      - "traefik.http.middlewares.frappe-host-rewrite.headers.customrequestheaders.Host=erp-prod.growatt.app"
+      - "traefik.http.middlewares.frappe-host-rewrite.headers.customrequestheaders.Host=${SITE_EXTERNAL_DOMAIN}"
     depends_on:
       create-site-service-prod:
         condition: service_completed_successfully
@@ -117,9 +117,9 @@ services:
       - >
         bash /run/start_frontend.sh;
     environment:
-      SITE_NAME: erp-prod.growatt.app
+      SITE_NAME: ${SITE_EXTERNAL_DOMAIN}
       BACKEND: backend-service-prod:8000
-      FRAPPE_SITE_NAME_HEADER: erp-prod.growatt.app
+      FRAPPE_SITE_NAME_HEADER: ${SITE_EXTERNAL_DOMAIN}
       SOCKETIO: websocket-service-prod:9000
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
