@@ -112,13 +112,13 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=dokploy-network"
       # 2. The External URL
-      - "traefik.http.routers.frappe-prod-${SITE_EXTERNAL_DOMAIN}.rule=Host(`${SITE_EXTERNAL_DOMAIN}`)"
-      - "traefik.http.routers.frappe-prod-${SITE_EXTERNAL_DOMAIN}.entrypoints=websecure"
-      - "traefik.http.routers.frappe-prod-${SITE_EXTERNAL_DOMAIN}.tls.certresolver=letsencrypt"
-      - "traefik.http.services.frappe-prod-${SITE_EXTERNAL_DOMAIN}.loadbalancer.server.port=8080"
-      - "traefik.http.routers.frappe-prod-${SITE_EXTERNAL_DOMAIN}.middlewares=frappe-host-rewrite-${SITE_EXTERNAL_DOMAIN}"
+      - "traefik.http.routers.frappe-frontend.rule=Host(`${SITE_EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.frappe-frontend.entrypoints=websecure"
+      - "traefik.http.routers.frappe-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frappe-frontend.loadbalancer.server.port=8080"
+      - "traefik.http.routers.frappe-frontend.middlewares=frappe-host-rewrite"
       # Define the middleware: Change Host header to the internal site name
-      - "traefik.http.middlewares.frappe-host-rewrite-${SITE_EXTERNAL_DOMAIN}.headers.customrequestheaders.Host=${SITE_EXTERNAL_DOMAIN}"
+      - "traefik.http.middlewares.frappe-host-rewrite.headers.customrequestheaders.Host=${SITE_EXTERNAL_DOMAIN}"
     depends_on:
       create-site-service:
         condition: service_completed_successfully
