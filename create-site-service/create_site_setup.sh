@@ -54,3 +54,12 @@ bench new-site --mariadb-user-host-login-scope='%' \
   --db-root-password=${MYSQL_ROOT_PASSWORD} \
   --install-app erpnext \
   --set-default ${SITE_NAME}
+
+echo "✅ Site created successfully"
+
+# Ensure the site is set as default
+echo "${SITE_NAME}" > sites/currentsite.txt
+
+echo "📝 Current site set to: ${SITE_NAME}"
+echo "Contents of currentsite.txt:"
+cat sites/currentsite.txt
