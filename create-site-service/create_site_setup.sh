@@ -6,6 +6,30 @@ set -e
 echo "Running create_site_setup.sh"
 trap 'echo "Finished create_site_setup.sh"' EXIT
 
+# Validate required environment variables
+if [ -z "${SITE_NAME}" ]; then
+  echo "⛔ ERROR: SITE_NAME environment variable is not set"
+  exit 1
+fi
+
+if [ -z "${MYSQL_ROOT_PASSWORD}" ]; then
+  echo "⛔ ERROR: MYSQL_ROOT_PASSWORD environment variable is not set"
+  exit 1
+fi
+
+if [ -z "${MYSQL_ROOT_USERNAME}" ]; then
+  echo "⛔ ERROR: MYSQL_ROOT_USERNAME environment variable is not set"
+  exit 1
+fi
+
+echo "✅ Environment variables validated"
+echo "   SITE_NAME: ${SITE_NAME}"
+echo "   MYSQL_ROOT_USERNAME: ${MYSQL_ROOT_USERNAME}"
+echo "   MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:0:3}********"
+if [ -n "${DB_NAME}" ]; then
+  echo "   DB_NAME: ${DB_NAME}"
+fi
+
 echo "Using MySQL root password: ${MYSQL_ROOT_PASSWORD:0:3}********"
 
 if bench --site "$SITE_NAME" list-apps >/dev/null 2>&1; then
@@ -66,20 +90,91 @@ bench new-site --mariadb-user-host-login-scope='%' \
     ${DB_NAME_FLAG} \
     ${SITE_NAME}
 
-echo "✅ Site created successfully"
+echo "✅ Site creation command completed"
 
 # Ensure the site is set as default in the sites directory
 BENCH_DIR="/home/frappe/frappe-bench"
 echo "${SITE_NAME}" > "${BENCH_DIR}/sites/currentsite.txt"
 
 echo "📝 Current site set to: ${SITE_NAME}"
-echo "Contents of currentsite.txt:"
-cat "${BENCH_DIR}/sites/currentsite.txt"
 
-# Also verify site directory exists
+# ========================================
+# POST-CREATION VALIDATION
+# ========================================
+echo "\n🔍 Validating site creation..."
+
+VALIDATION_FAILED=0
+
+# 1. Verify site directory exists
 if [ -d "${BENCH_DIR}/sites/${SITE_NAME}" ]; then
   echo "✅ Site directory exists: ${BENCH_DIR}/sites/${SITE_NAME}"
-  ls -la "${BENCH_DIR}/sites/${SITE_NAME}" | head -10
 else
-  echo "⚠️ Site directory not found: ${BENCH_DIR}/sites/${SITE_NAME}"
+  echo "⛔ VALIDATION FAILED: Site directory not found: ${BENCH_DIR}/sites/${SITE_NAME}"
+  VALIDATION_FAILED=1
+fi
+
+# 2. Verify site config file exists
+if [ -f "${BENCH_DIR}/sites/${SITE_NAME}/site_config.json" ]; then
+  echo "✅ Site config file exists"
+else
+  echo "⛔ VALIDATION FAILED: Site config file not found"
+  VALIDATION_FAILED=1
+fi
+
+# 3. Verify site is accessible via bench
+if bench --site "${SITE_NAME}" list-apps >/dev/null 2>&1; then
+  echo "✅ Site is accessible via bench commands"
+  echo "   Installed apps:"
+  bench --site "${SITE_NAME}" list-apps | sed 's/^/     - /'
+else
+  echo "⛔ VALIDATION FAILED: Site is not accessible via bench commands"
+  VALIDATION_FAILED=1
+fi
+
+# 4. Verify database name matches if DB_NAME was provided
+if [ -n "${DB_NAME}" ]; then
+  echo "\n🔍 Validating database name..."
+  ACTUAL_DB_NAME=$(grep -hs ^ "${BENCH_DIR}/sites/${SITE_NAME}/site_config.json" | jq -r '.db_name // empty')
+  
+  if [ -n "${ACTUAL_DB_NAME}" ]; then
+    if [ "${ACTUAL_DB_NAME}" = "${DB_NAME}" ]; then
+      echo "✅ Database name matches: ${ACTUAL_DB_NAME}"
+    else
+      echo "⛔ VALIDATION FAILED: Database name mismatch!"
+      echo "   Expected: ${DB_NAME}"
+      echo "   Actual: ${ACTUAL_DB_NAME}"
+      VALIDATION_FAILED=1
+    fi
+  else
+    echo "⛔ VALIDATION FAILED: Could not read database name from site_config.json"
+    VALIDATION_FAILED=1
+  fi
+else
+  echo "\n📝 Database name was auto-generated (DB_NAME not provided)"
+  ACTUAL_DB_NAME=$(grep -hs ^ "${BENCH_DIR}/sites/${SITE_NAME}/site_config.json" | jq -r '.db_name // empty')
+  if [ -n "${ACTUAL_DB_NAME}" ]; then
+    echo "   Generated database name: ${ACTUAL_DB_NAME}"
+  fi
+fi
+
+# 5. Verify currentsite.txt matches
+CURRENT_SITE=$(cat "${BENCH_DIR}/sites/currentsite.txt" 2>/dev/null || echo "")
+if [ "${CURRENT_SITE}" = "${SITE_NAME}" ]; then
+  echo "✅ Current site is set correctly: ${CURRENT_SITE}"
+else
+  echo "⚠️ WARNING: Current site mismatch (expected: ${SITE_NAME}, got: ${CURRENT_SITE})"
+fi
+
+echo "\n========================================"
+if [ ${VALIDATION_FAILED} -eq 0 ]; then
+  echo "✅ ALL VALIDATIONS PASSED"
+  echo "   Site Name: ${SITE_NAME}"
+  if [ -n "${ACTUAL_DB_NAME}" ]; then
+    echo "   Database Name: ${ACTUAL_DB_NAME}"
+  fi
+  echo "========================================"
+else
+  echo "⛔ VALIDATION FAILED - Site creation may be incomplete"
+  echo "========================================"
+  exit 1
 fi
