@@ -3,11 +3,7 @@
   {"name": "frappe_agt", "url": "https://github.com/AnyGridTech/frappe_agt", "branch": "main"},
   {"name": "frappe_iframe", "url": "https://github.com/AnyGridTech/frappe_iframe", "branch": "main"},
   {"name": "frappe_workflow_history", "url": "https://github.com/AnyGridTech/frappe_workflow_history", "branch": "main"},
-  {"name": "frappe_tooltip", "url": "https://github.com/AnyGridTech/frappe_tooltip", "branch": "main"},
   {"name": "frappe_growatt_plant", "url": "https://github.com/AnyGridTech/frappe_growatt_plant", "branch": "develop"},
   {"name": "frappe_it_request", "url": "https://github.com/AnyGridTech/frappe_it_request", "branch": "main"},
-  {"name": "frappe_growatt_serial_no_workflow", "url": "https://github.com/AnyGridTech/frappe_growatt_serial_no_workflow", "branch": "main"},
-  {"name": "frappe_growatt_ticket", "url": "https://github.com/AnyGridTech/frappe_growatt_ticket", "branch": "main"},
-  {"name": "frappe_growatt_checklists", "url": "https://github.com/AnyGridTech/frappe_growatt_checklists", "branch": "main"},
-  {"name": "frappe_growatt_compliance_statement", "url": "https://github.com/AnyGridTech/frappe_growatt_compliance_statement", "branch": "main"}
+  {"name": "frappe_growatt_serial_no_workflow", "url": "https://github.com/AnyGridTech/frappe_growatt_serial_no_workflow", "branch": "main"}
 ]
