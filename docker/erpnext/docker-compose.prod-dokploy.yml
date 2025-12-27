@@ -91,6 +91,7 @@ services:
       SITE_NAME: erp-prod.growatt.app
       MYSQL_ROOT_USERNAME: root
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      DB_NAME: ${DB_NAME:-}
 
   frontend-service-prod:
     <<: *frappe-defaults

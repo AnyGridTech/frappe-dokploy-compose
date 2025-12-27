@@ -48,9 +48,20 @@ echo "Creating new site named $SITE_NAME..."
 echo "Using MySQL root username: $MYSQL_ROOT_USERNAME"
 echo "Using MySQL root password: ${MYSQL_ROOT_PASSWORD:0:3}********"
 
+# Prepare database name flag if DB_NAME is provided
+DB_NAME_FLAG=""
+if [ -n "${DB_NAME}" ]; then
+  echo "Using custom database name: $DB_NAME"
+  DB_NAME_FLAG="--db-name=${DB_NAME}"
+else
+  echo "No custom database name provided, using random database name"
+fi
+
 bench new-site --mariadb-user-host-login-scope='%' \
   --admin-password=${MYSQL_ROOT_PASSWORD} \
   --db-root-username=root \
   --db-root-password=${MYSQL_ROOT_PASSWORD} \
   --install-app erpnext \
-  --set-default ${SITE_NAME}
+  --set-default \
+  ${DB_NAME_FLAG} \
+  ${SITE_NAME}
