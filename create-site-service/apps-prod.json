@@ -35,8 +35,8 @@
     "branch": "main"
   },
   {
-    "name": "frappe_growatt_ticket",
-    "url": "https://github.com/AnyGridTech/frappe_growatt_ticket",
+    "name": "frappe_it_request",
+    "url": "https://github.com/AnyGridTech/frappe_it_request",
     "branch": "main"
   },
   {
@@ -45,8 +45,8 @@
     "branch": "main"
   },
   {
-    "name": "frappe_it_request",
-    "url": "https://github.com/AnyGridTech/frappe_it_request",
+    "name": "frappe_growatt_ticket",
+    "url": "https://github.com/AnyGridTech/frappe_growatt_ticket",
     "branch": "main"
   }
 ]
