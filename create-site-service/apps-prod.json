@@ -35,6 +35,11 @@
     "branch": "main"
   },
   {
+    "name": "frappe_growatt_workflow_fixtures",
+    "url": "https://github.com/AnyGridTech/frappe_growatt_workflow_fixtures",
+    "branch": "main"
+  },
+  {
     "name": "frappe_it_request",
     "url": "https://github.com/AnyGridTech/frappe_it_request",
     "branch": "main"
