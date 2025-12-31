@@ -145,6 +145,8 @@ services:
 
   backend-service:
     <<: *frappe-defaults
+    restart: always
+    pull_policy: always
     depends_on:
       create-site-service:
         condition: service_completed_successfully
@@ -163,6 +165,8 @@ services:
       DB_HOST: db-service
       DB_PORT: "${DB_PORT:-3306}"
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    labels:
+      - "com.docker.compose.recreate=true"
     
   queue-long-service:
     <<: *frappe-defaults
