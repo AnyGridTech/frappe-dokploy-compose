@@ -20,6 +20,11 @@
     "branch": "main"
   },
   {
+    "name": "frappe_iframe",
+    "url": "https://github.com/AnyGridTech/frappe_iframe",
+    "branch": "main"
+  },
+  {
     "name": "frappe_info_card",
     "url": "https://github.com/AnyGridTech/frappe_info_card",
     "branch": "main"
